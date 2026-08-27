@@ -1,35 +1,45 @@
 #!/usr/bin/env bash
-# 빌드해서 서버의 정적 루트로 올린다. 정적 파일이라 컨테이너도 재시작도 필요 없다.
+# 서버에서 직접 실행하는 배포 스크립트.
 #
-#   ./scripts/deploy.sh root@api.mangro.cloud
+#   ssh root@<서버>
+#   deploy-web
 #
-# 환경변수:
-#   VITE_API_BASE_URL  빌드에 박히는 API 주소 (기본: https://api.mangro.cloud)
-#   WEB_ROOT           서버의 배포 경로 (기본: /var/www/admin)
+# backend 저장소의 scripts/deploy.sh 와 같은 모양이다 — 배포 절차가 둘로 갈리지 않도록
+# 서버가 끌어오는(pull) 방향으로 통일한다.
 set -euo pipefail
 
-HOST="${1:-}"
-if [ -z "$HOST" ]; then
-	echo "usage: scripts/deploy.sh <ssh-host>" >&2
-	exit 1
-fi
+cd "$(dirname "$0")/.."
 
 API_BASE_URL="${VITE_API_BASE_URL:-https://api.mangro.cloud}"
 WEB_ROOT="${WEB_ROOT:-/var/www/admin}"
 
-# 배포본에는 dev 프록시가 없다. 이 값이 비면 요청이 /api 로 나가서 전부 404 가 된다.
+if [ ! -d "$WEB_ROOT" ]; then
+	echo "error: $WEB_ROOT 이 없다. root 로 만들고 deploy 소유로 넘겨야 한다:" >&2
+	echo "       mkdir -p $WEB_ROOT && chown deploy:deploy $WEB_ROOT" >&2
+	exit 1
+fi
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "==> deploying branch: $BRANCH"
+if [ "$BRANCH" != "main" ]; then
+	echo "warning: not on main" >&2
+fi
+
+echo "==> pulling"
+git pull --ff-only
+
+# ci 는 package-lock.json 을 그대로 재현한다(install 과 달리 lock 을 갱신하지 않는다).
+echo "==> installing dependencies"
+npm ci
+
+# 배포본에는 dev 프록시가 없다. 이 값이 비면 요청이 /api 로 나가 전부 404 가 된다.
 echo "==> building (API: $API_BASE_URL)"
 VITE_API_BASE_URL="$API_BASE_URL" npm run build
 
-# 디렉터리를 통째로 갈아끼운다. Vite 는 해시가 붙은 파일명을 쓰므로 덮어쓰기만 하면 옛 번들이
-# 계속 쌓인다.
-echo "==> uploading to $HOST:$WEB_ROOT"
-tar -C dist -cz . | ssh "$HOST" "
-	set -e
-	rm -rf '$WEB_ROOT'
-	mkdir -p '$WEB_ROOT'
-	tar -C '$WEB_ROOT' -xz
-	chown -R www-data:www-data '$WEB_ROOT'
-"
+# 내용만 비운다. 디렉터리를 지웠다 만들면 소유권·권한을 매번 다시 맞춰야 한다.
+# `:?` 는 변수가 비었을 때 `rm -rf /*` 가 되는 것을 막는다.
+echo "==> publishing to $WEB_ROOT"
+rm -rf "${WEB_ROOT:?}"/* "${WEB_ROOT:?}"/.[!.]* 2>/dev/null || true
+cp -a dist/. "$WEB_ROOT/"
 
 echo "==> done"

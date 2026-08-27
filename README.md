@@ -23,15 +23,34 @@ dev 서버는 `/api/*` 요청을 백엔드로 프록시한다. 브라우저 입�
 ## 배포
 
 ```sh
-./scripts/deploy.sh root@api.mangro.cloud
+ssh root@api.mangro.cloud
+deploy-web
 ```
 
-빌드해서 `dist/` 를 서버의 `/var/www/admin` 으로 올린다. 정적 파일이라 컨테이너도 재시작도
-필요 없다. nginx 설정은 [`deploy/nginx-admin.conf`](deploy/nginx-admin.conf) 를 서버의
+**서버가 끌어온다(pull).** backend 저장소와 같은 방식이라 배포 절차가 둘로 갈리지 않는다 —
+`/usr/local/bin/deploy-web` 은 `su - deploy` 로 넘기는 래퍼이고, 실제 작업은
+[`scripts/deploy.sh`](scripts/deploy.sh) 가 한다: `git pull` → `npm ci` → 빌드 →
+`/var/www/admin` 내용 교체. 정적 파일이라 재시작할 것이 없다.
+
+nginx 설정은 [`deploy/nginx-admin.conf`](deploy/nginx-admin.conf) 를 서버의
 `/etc/nginx/sites-available/` 로 복사해 쓴다(HTTPS 는 `certbot --nginx -d admin.mangro.cloud`).
 
 배포본에는 dev 프록시가 없어 **API 를 다른 오리진에서 부르게 된다** — 백엔드의
 `cors.allowed-origins` 에 이 사이트 주소가 들어 있어야 한다.
+
+### 서버 최초 설정 (1회)
+
+```sh
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -   # root
+apt-get install -y nodejs
+mkdir -p /var/www/admin && chown deploy:deploy /var/www/admin
+su - deploy -c 'git clone https://github.com/SWYP-APP-S6/admin-web.git ~/admin-web'
+printf '#!/bin/sh\nexec su - deploy -c /home/deploy/admin-web/scripts/deploy.sh\n' > /usr/local/bin/deploy-web
+chmod +x /usr/local/bin/deploy-web
+```
+
+`/var/www/admin` 을 `deploy` 소유로 두는 이유: 배포를 root 로 돌리지 않기 위해서다
+(`deploy` 는 sudo 권한이 없다).
 
 ## 구조
 
