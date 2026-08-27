@@ -20,14 +20,18 @@ dev 서버는 `/api/*` 요청을 백엔드로 프록시한다. 브라우저 입�
 로컬 관리자 계정은 backend 저장소의 `db/data/dev_seed_admin.sql` 로 심는다
 (`admin@swyp.com` / `swyp-admin-1234`). **운영에는 이 계정을 쓰지 않는다.**
 
-## 배포 빌드
+## 배포
 
 ```sh
-VITE_API_BASE_URL=https://api.mangro.cloud npm run build   # → dist/
+./scripts/deploy.sh root@api.mangro.cloud
 ```
 
-정적 파일이라 nginx 가 그대로 서빙한다. 배포본에는 dev 프록시가 없으므로 **API 를 다른
-오리진에서 부르게 되고, 백엔드의 `cors.allowed-origins` 에 이 사이트 주소가 들어 있어야 한다.**
+빌드해서 `dist/` 를 서버의 `/var/www/admin` 으로 올린다. 정적 파일이라 컨테이너도 재시작도
+필요 없다. nginx 설정은 [`deploy/nginx-admin.conf`](deploy/nginx-admin.conf) 를 서버의
+`/etc/nginx/sites-available/` 로 복사해 쓴다(HTTPS 는 `certbot --nginx -d admin.mangro.cloud`).
+
+배포본에는 dev 프록시가 없어 **API 를 다른 오리진에서 부르게 된다** — 백엔드의
+`cors.allowed-origins` 에 이 사이트 주소가 들어 있어야 한다.
 
 ## 구조
 
