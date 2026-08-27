@@ -11,6 +11,13 @@ export async function login(email: string, password: string): Promise<void> {
 	storeTokens(tokens.accessToken, tokens.refreshToken);
 }
 
+export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+	return request<void>("/admin/auth/password", {
+		method: "PUT",
+		body: { currentPassword, newPassword },
+	});
+}
+
 export async function logout(): Promise<void> {
 	const refreshToken = getRefreshToken();
 	if (refreshToken) {

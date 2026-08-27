@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/LoginPage";
+import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
 
@@ -38,6 +39,7 @@ export default function App() {
 					>
 						<Route path="/recipes" element={<RecipeListPage />} />
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
+						<Route path="/password" element={<PasswordPage />} />
 					</Route>
 					<Route path="*" element={<Navigate to="/recipes" replace />} />
 				</Routes>

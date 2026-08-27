@@ -21,6 +21,12 @@ export function Layout() {
 					>
 						레시피
 					</NavLink>
+					<NavLink
+						to="/password"
+						className={({ isActive }) => (isActive ? "layout__link layout__link--active" : "layout__link")}
+					>
+						비밀번호 변경
+					</NavLink>
 				</nav>
 				<button className="button" type="button" onClick={handleSignOut}>
 					로그아웃

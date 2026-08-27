@@ -375,3 +375,43 @@ img {
 	border: 1px solid var(--border);
 	display: block;
 }
+
+/* 폼 화면 */
+.narrow {
+	max-width: 420px;
+}
+
+.notice {
+	margin: 0 0 16px;
+	padding: 11px 14px;
+	background: #fff8e6;
+	border: 1px solid #f0dca8;
+	border-radius: var(--radius);
+	font-size: 13px;
+	line-height: 1.6;
+	color: #6b5518;
+}
+
+.form-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.form-message {
+	margin: 0;
+	font-size: 13px;
+}
+
+.form-message--error {
+	color: var(--danger);
+}
+
+.form-message--success {
+	color: var(--accent);
+	font-weight: 600;
+}
