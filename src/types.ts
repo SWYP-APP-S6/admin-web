@@ -78,3 +78,42 @@ export interface RecipeDetail {
 	nutrition: RecipeNutrition | null;
 	tags: string[];
 }
+
+export type UserRole = "CONSUMER" | "OWNER";
+
+export interface UserSummary {
+	id: number;
+	role: UserRole;
+	nickname: string;
+	phone: string | null;
+	oauthProvider: string | null;
+	/** 사용자가 설정한 기본 동네. 위치 권한을 거부했을 때의 탐색 기준이며, 미설정이면 null. */
+	regionName: string | null;
+	marketingOptIn: boolean;
+	termsAgreedAt: string;
+	createdAt: string;
+}
+
+export type StoreStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface StoreSummary {
+	id: number;
+	name: string;
+	status: StoreStatus;
+	address: string;
+	addressDetail: string | null;
+	phone: string;
+	businessOpenTime: string;
+	businessCloseTime: string;
+	owner: {
+		id: number;
+		nickname: string;
+		phone: string | null;
+	};
+	createdAt: string;
+}
+
+export interface StoreDetail extends StoreSummary {
+	businessRegistrationNumber: string | null;
+	applicationNote: string | null;
+}

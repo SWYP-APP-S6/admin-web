@@ -27,47 +27,112 @@ img {
 }
 
 /* 레이아웃 */
-.layout__header {
+.layout {
 	display: flex;
-	align-items: center;
+	min-height: 100vh;
+}
+
+.sidebar {
+	flex: 0 0 220px;
+	display: flex;
+	flex-direction: column;
 	gap: 24px;
-	padding: 0 24px;
-	height: 56px;
+	padding: 20px 14px;
 	background: var(--surface);
-	border-bottom: 1px solid var(--border);
+	border-right: 1px solid var(--border);
 	position: sticky;
 	top: 0;
-	z-index: 10;
+	height: 100vh;
 }
 
-.layout__brand {
-	font-weight: 600;
+.sidebar__brand {
+	font-weight: 700;
+	font-size: 15px;
+	padding: 0 10px;
 }
 
-.layout__nav {
-	flex: 1;
+.nav {
 	display: flex;
-	gap: 4px;
+	flex-direction: column;
+	gap: 2px;
 }
 
-.layout__link {
-	padding: 6px 12px;
+/* 아래쪽 계정 영역을 바닥에 붙인다. */
+.sidebar__footer {
+	margin-top: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.nav__link {
+	display: block;
+	padding: 8px 10px;
 	border-radius: var(--radius);
 	color: var(--text-muted);
 	text-decoration: none;
 	font-size: 14px;
 }
 
-.layout__link--active {
+.nav__link:hover {
+	background: var(--bg);
+}
+
+.nav__link--active {
 	background: var(--bg);
 	color: var(--text);
 	font-weight: 600;
 }
 
-.layout__main {
-	max-width: 1080px;
-	margin: 0 auto;
-	padding: 24px;
+/* 로그아웃은 링크가 아니라 동작이라 button 이지만, 나란히 보여야 해서 모양만 맞춘다. */
+.nav__link--button {
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: left;
+	width: 100%;
+	cursor: pointer;
+}
+
+.content {
+	flex: 1;
+	min-width: 0;
+	padding: 28px 32px;
+	max-width: 1200px;
+}
+
+/* 좁은 화면에서는 사이드바를 위로 올린다. 관리자 도구라 데스크톱이 기준이지만
+   태블릿 가로폭에서 본문이 눌리지 않게 한다. */
+@media (max-width: 768px) {
+	.layout {
+		flex-direction: column;
+	}
+
+	.sidebar {
+		flex: none;
+		height: auto;
+		position: static;
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+		border-right: none;
+		border-bottom: 1px solid var(--border);
+		overflow-x: auto;
+	}
+
+	.nav,
+	.sidebar__footer {
+		flex-direction: row;
+		margin-top: 0;
+		padding-top: 0;
+		border-top: none;
+	}
+
+	.content {
+		padding: 20px;
+	}
 }
 
 /* 공통 요소 */
@@ -414,4 +479,169 @@ img {
 .form-message--success {
 	color: var(--accent);
 	font-weight: 600;
+}
+
+/* 테이블 */
+.table-wrap {
+	overflow-x: auto;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+
+.table th {
+	text-align: left;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--border);
+	white-space: nowrap;
+}
+
+.table td {
+	padding: 11px 16px;
+	border-bottom: 1px solid var(--border);
+	white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.table tbody tr:hover {
+	background: var(--bg);
+}
+
+.table__muted {
+	color: var(--text-muted);
+}
+
+.tag {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.tag--consumer {
+	background: #e8f1fb;
+	color: #1c5390;
+}
+
+.tag--owner {
+	background: #e7f4ec;
+	color: #1f6f4a;
+}
+
+.tag--pending {
+	background: #fdf1dc;
+	color: #8a5a11;
+}
+
+.tag--rejected {
+	background: #fbeaea;
+	color: #a02620;
+}
+
+.row-actions {
+	display: flex;
+	gap: 6px;
+}
+
+.button--small {
+	padding: 4px 10px;
+	font-size: 13px;
+}
+
+.button--danger {
+	color: var(--danger);
+	border-color: #f0cfcd;
+}
+
+.button--danger:hover:not(:disabled) {
+	border-color: var(--danger);
+}
+
+/* 모달 */
+.modal {
+	width: min(560px, calc(100vw - 32px));
+	max-height: min(80vh, 720px);
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--surface);
+	color: var(--text);
+	overflow: hidden;
+}
+
+.modal::backdrop {
+	background: rgb(20 24 28 / 45%);
+}
+
+.modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--border);
+}
+
+.modal__title {
+	margin: 0;
+	font-size: 16px;
+}
+
+.modal__close {
+	border: none;
+	background: none;
+	font-size: 22px;
+	line-height: 1;
+	color: var(--text-muted);
+	cursor: pointer;
+	padding: 0 4px;
+}
+
+.modal__close:hover {
+	color: var(--text);
+}
+
+.modal__body {
+	padding: 20px;
+	overflow-y: auto;
+	max-height: calc(80vh - 60px);
+}
+
+.modal__label {
+	margin: 18px 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.modal__text {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* 신청서는 점주가 줄을 나눠 쓴 그대로 보여준다. */
+.modal__note {
+	margin: 0;
+	padding: 14px 16px;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 14px;
+	line-height: 1.75;
+	white-space: pre-wrap;
+	word-break: break-word;
 }

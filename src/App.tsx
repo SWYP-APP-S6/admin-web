@@ -6,6 +6,8 @@ import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
+import { StoreListPage } from "./pages/StoreListPage";
+import { UserListPage } from "./pages/UserListPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
 	const { authenticated } = useAuth();
@@ -39,6 +41,8 @@ export default function App() {
 					>
 						<Route path="/recipes" element={<RecipeListPage />} />
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
+						<Route path="/users" element={<UserListPage />} />
+						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
 					<Route path="*" element={<Navigate to="/recipes" replace />} />
