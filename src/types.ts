@@ -117,3 +117,125 @@ export interface StoreDetail extends StoreSummary {
 	businessRegistrationNumber: string | null;
 	applicationNote: string | null;
 }
+
+// --- 숏폼 생성 파이프라인 (shorts_maker) --------------------------------------
+// 이 백엔드가 프록시하는 별도 서비스의 응답이다. 스키마 소유자가 우리가 아니라서
+// 화면이 실제로 쓰는 필드만 좁게 선언한다 — 전부 흉내내면 저쪽이 바뀔 때마다 깨진다.
+
+export interface ShortsHealth {
+	ok: boolean;
+	schema: number;
+	geminiKey: boolean;
+	whisperModel: string;
+	activeJob: ShortsJob | null;
+}
+
+export interface ShortsJob {
+	id: string;
+	createdAt: string;
+	kind: string;
+	target: string;
+	status: "QUEUED" | "RUNNING" | "DONE" | "FAILED";
+	error: string | null;
+}
+
+export interface ShortsSource {
+	id: number;
+	title: string;
+	content_type: string;
+	duration_sec: number | null;
+	origin: string | null;
+	status: string;
+}
+
+export interface ShortsSegment {
+	id: number;
+	idx: number;
+	start_sec: number;
+	end_sec: number;
+	description: string | null;
+	excluded_by: string | null;
+	excluded_reason: string | null;
+}
+
+export interface ShortsChunk {
+	id: number;
+	idx: number;
+	start_sec: number;
+	end_sec: number;
+	utteranceCount: number;
+	segments: ShortsSegment[];
+}
+
+export interface ShortsRun {
+	id: number;
+	status: string;
+	criteria_prompt: string | null;
+	error: string | null;
+	ranked: {
+		ranked?: { idx: number; score: number; reason: string }[];
+		excluded?: { idx: number; reason: string }[];
+	} | null;
+}
+
+export interface ShortsClipReview {
+	id: number;
+	verdict: "OK" | "NG";
+	note: string | null;
+}
+
+export interface ShortsClip {
+	id: number;
+	segment_id: number;
+	start_sec: number;
+	end_sec: number;
+	score: number | null;
+	reason: string | null;
+	rendered: number;
+	description: string | null;
+	reviews: ShortsClipReview[];
+}
+
+export interface ShortsStageCall {
+	id: number;
+	stage: string;
+	model: string | null;
+	input_tokens: number | null;
+	output_tokens: number | null;
+	thinking_tokens: number | null;
+	latency_ms: number | null;
+	error: string | null;
+}
+
+export interface ShortsUtterance {
+	idx: number;
+	start_sec: number;
+	end_sec: number;
+	text: string;
+	avg_logprob: number | null;
+}
+
+export interface ShortsCost {
+	llmCalls: number;
+	inputTokens: number;
+	outputTokens: number;
+	thinkingTokens: number;
+	billedOutputTokens: number;
+	usd: number;
+	krw: number;
+	rate: {
+		inputUsdPer1M: number;
+		outputUsdPer1M: number;
+		usdKrw: number;
+		model: string;
+	};
+}
+
+export interface ShortsSourceDetail {
+	source: ShortsSource;
+	chunks: ShortsChunk[];
+	runs: ShortsRun[];
+	clips: ShortsClip[];
+	cost: ShortsCost;
+	stageCalls: ShortsStageCall[];
+}

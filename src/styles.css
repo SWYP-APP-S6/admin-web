@@ -645,3 +645,137 @@ img {
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+
+/* ===== 숏폼 생성 (베타) =====
+   이 화면 전용 클래스를 따로 둔다. `.card` 는 레시피 목록의 **링크 카드**라 padding 이 없고
+   자식이 세로로 늘어나며, `.button--primary` 는 로그인 폼용이라 `width:100%` 다 —
+   그대로 쓰면 버튼이 가로 전체를 먹고 옆 버튼이 두 줄로 접힌다. */
+
+.sm-panel {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 14px 16px;
+	margin-bottom: 10px;
+}
+
+/* 버튼이 늘어나지 않게 명시한다 — 액션은 내용만큼만 차지해야 눈이 따라간다. */
+.sm-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.sm-actions > * {
+	flex: 0 0 auto;
+}
+
+.sm-actions--end {
+	margin-left: auto;
+}
+
+/* 강조 버튼. `.button--primary` 와 달리 폭을 먹지 않는다. */
+.sm-go {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+	font-weight: 600;
+}
+
+.sm-go:hover:not(:disabled) {
+	filter: brightness(1.08);
+}
+
+/* 랭킹 한 줄. 제목·근거·액션이 한눈에 들어오도록 세로 여백을 줄인다. */
+.sm-item {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 12px 14px;
+	margin-bottom: 8px;
+}
+
+.sm-item__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.sm-item__rank {
+	font-weight: 700;
+	font-size: 15px;
+	min-width: 28px;
+}
+
+/* 한 줄이 1200px 를 가로지르면 눈이 다음 줄 첫머리를 못 찾는다. 읽기 폭을 제한한다. */
+.sm-item__title {
+	margin: 8px 0 2px;
+	font-size: 14px;
+	line-height: 1.5;
+	max-width: 76ch;
+}
+
+.sm-item__reason {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 13px;
+	line-height: 1.5;
+	max-width: 76ch;
+}
+
+.sm-score {
+	background: var(--accent);
+	color: #fff;
+	border-radius: 999px;
+	padding: 1px 9px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.sm-badge {
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 1px 9px;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.sm-meta {
+	color: var(--text-muted);
+	font-size: 13px;
+}
+
+.sm-clip {
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+}
+
+/* 접히는 참고 영역 — 전사·비용·단계기록이 결과를 밀어내지 않게 기본은 접어둔다.
+   기본 <details> 는 클릭 가능해 보이지 않아 최소한의 어포던스만 준다. */
+.sm-fold {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 12px 16px;
+	margin-bottom: 8px;
+}
+
+.sm-fold > summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	user-select: none;
+}
+
+.sm-fold > summary:hover {
+	color: var(--accent);
+}
+
+.sm-fold[open] > summary {
+	margin-bottom: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--border);
+}
