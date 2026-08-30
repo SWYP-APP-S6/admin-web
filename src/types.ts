@@ -127,6 +127,7 @@ export interface ShortsHealth {
 	schema: number;
 	geminiKey: boolean;
 	whisperModel: string;
+	languages: Record<string, string>;
 	activeJob: ShortsJob | null;
 }
 
@@ -143,6 +144,7 @@ export interface ShortsSource {
 	id: number;
 	title: string;
 	content_type: string;
+	language: string | null;
 	duration_sec: number | null;
 	origin: string | null;
 	status: string;

@@ -66,6 +66,7 @@ export function ShortsPage() {
 	const [toMin, setToMin] = useState(30);
 	const [openPreview, setOpenPreview] = useState<number | null>(null);
 	const [transcript, setTranscript] = useState<ShortsUtterance[] | null>(null);
+	const [language, setLanguage] = useState<string | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const pollRef = useRef<number | null>(null);
 
@@ -207,6 +208,7 @@ export function ShortsPage() {
 				open={modalOpen}
 				onClose={() => setModalOpen(false)}
 				unregistered={(media.data?.items ?? []).filter((i) => i.sourceId === null)}
+				languages={health.data?.languages ?? { ko: "한국어", en: "영어" }}
 				onStarted={setJob}
 			/>
 
@@ -288,14 +290,34 @@ export function ShortsPage() {
 				detail={utterances > 0 ? `발화 ${utterances}개` : "몇 분 걸립니다"}
 				actions={
 					chunk && (
-						<button
-							type="button"
-							className={`button button--small${nextStep === 3 ? " sm-go" : ""}`}
-							disabled={busy}
-							onClick={() => submit(() => runStt(chunk.id))}
-						>
-							{utterances > 0 ? "다시" : "실행"}
-						</button>
+						<>
+							<select
+								className="field__input"
+								style={{ width: 110 }}
+								value={language ?? data?.source.language ?? ""}
+								onChange={(e) => setLanguage(e.target.value)}
+								aria-label="음성 언어"
+							>
+								{Object.entries(health.data?.languages ?? { ko: "한국어", en: "영어" }).map(
+									([code, label]) => (
+										<option key={code} value={code}>
+											{label}
+										</option>
+									),
+								)}
+								<option value="">자동 감지</option>
+							</select>
+							<button
+								type="button"
+								className={`button button--small${nextStep === 3 ? " sm-go" : ""}`}
+								disabled={busy}
+								onClick={() =>
+									submit(() => runStt(chunk.id, language ?? data?.source.language ?? null))
+								}
+							>
+								{utterances > 0 ? "다시" : "실행"}
+							</button>
+						</>
 					)
 				}
 			/>
