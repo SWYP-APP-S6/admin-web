@@ -7,6 +7,7 @@ interface Props {
 	open: boolean;
 	onClose: () => void;
 	unregistered: ShortsMediaItem[];
+	languages: Record<string, string>;
 	onStarted: (job: ShortsJob) => void;
 }
 
@@ -16,8 +17,10 @@ function mb(bytes: number): string {
 		: `${Math.round(bytes / (1 << 20))}MB`;
 }
 
-export function NewSourceModal({ open, onClose, unregistered, onStarted }: Props) {
+export function NewSourceModal({ open, onClose, unregistered, languages, onStarted }: Props) {
 	const [url, setUrl] = useState("");
+	// 자동 감지는 앞 30초로 판단해 가끔 틀리고, 틀리면 전사가 통째로 쓸모없어진다.
+	const [language, setLanguage] = useState("ko");
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 
@@ -51,12 +54,31 @@ export function NewSourceModal({ open, onClose, unregistered, onStarted }: Props
 					onChange={(event) => setUrl(event.target.value)}
 				/>
 			</div>
+			<div className="field" style={{ marginTop: 12 }}>
+				<label className="field__label" htmlFor="source-language">
+					음성 언어 — 나중에 3단계에서 바꿀 수 있습니다
+				</label>
+				<select
+					id="source-language"
+					className="field__input"
+					value={language}
+					onChange={(event) => setLanguage(event.target.value)}
+				>
+					{Object.entries(languages).map(([code, label]) => (
+						<option key={code} value={code}>
+							{label}
+						</option>
+					))}
+					<option value="">자동 감지</option>
+				</select>
+			</div>
+
 			<div className="sm-actions" style={{ marginTop: 10 }}>
 				<button
 					type="button"
 					className="button button--small sm-go"
 					disabled={busy || !url.trim()}
-					onClick={() => start(() => createSourceFromUrl(url.trim()))}
+					onClick={() => start(() => createSourceFromUrl(url.trim(), language || null))}
 				>
 					받아서 등록
 				</button>
@@ -76,7 +98,7 @@ export function NewSourceModal({ open, onClose, unregistered, onStarted }: Props
 									type="button"
 									className="button button--small"
 									disabled={busy}
-									onClick={() => start(() => registerMedia(item.name, item.name))}
+									onClick={() => start(() => registerMedia(item.name, item.name, language || null))}
 								>
 									등록
 								</button>

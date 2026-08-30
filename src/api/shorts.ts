@@ -27,17 +27,21 @@ export function deleteMedia(name: string): Promise<ShortsRemoval> {
 	});
 }
 
-export function registerMedia(name: string, title: string): Promise<ShortsJob> {
+export function registerMedia(
+	name: string,
+	title: string,
+	language: string | null,
+): Promise<ShortsJob> {
 	return request<ShortsJob>(`/admin/shorts/media/${encodeURIComponent(name)}/register`, {
 		method: "POST",
-		body: { title },
+		body: { title, language },
 	});
 }
 
-export function createSourceFromUrl(url: string): Promise<ShortsJob> {
+export function createSourceFromUrl(url: string, language: string | null): Promise<ShortsJob> {
 	return request<ShortsJob>("/admin/shorts/sources/from-url", {
 		method: "POST",
-		body: { url },
+		body: { url, language },
 	});
 }
 
@@ -60,10 +64,14 @@ export function fetchUtterances(chunkId: number): Promise<ShortsUtterance[]> {
 	return request<ShortsUtterance[]>(`/admin/shorts/chunks/${chunkId}/utterances`);
 }
 
-export function runStt(chunkId: number, force = true): Promise<ShortsJob> {
+export function runStt(
+	chunkId: number,
+	language: string | null,
+	force = true,
+): Promise<ShortsJob> {
 	return request<ShortsJob>(`/admin/shorts/chunks/${chunkId}/stt`, {
 		method: "POST",
-		body: { force },
+		body: { force, language },
 	});
 }
 
