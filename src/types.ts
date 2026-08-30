@@ -231,6 +231,33 @@ export interface ShortsCost {
 	};
 }
 
+export interface ShortsMediaItem {
+	name: string;
+	sizeBytes: number;
+	sourceId: number | null;
+	title: string | null;
+	durationSec: number | null;
+}
+
+export interface ShortsDisk {
+	totalBytes: number;
+	usedBytes: number;
+	freeBytes: number;
+	sourcesBytes: number;
+	workBytes: number;
+}
+
+export interface ShortsMediaList {
+	items: ShortsMediaItem[];
+	disk: ShortsDisk;
+}
+
+export interface ShortsRemoval {
+	removed: string[];
+	freedBytes: number;
+	sourceId: number | null;
+}
+
 export interface ShortsSourceDetail {
 	source: ShortsSource;
 	chunks: ShortsChunk[];
