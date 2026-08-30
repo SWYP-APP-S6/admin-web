@@ -779,3 +779,53 @@ img {
 	padding-bottom: 10px;
 	border-bottom: 1px solid var(--border);
 }
+
+/* 단계 — 번호를 붙여 순서를 드러낸다. 앞 단계가 안 끝나면 다음 버튼이 비활성화되므로
+   "지금 뭘 눌러야 하나"가 화면만 보고 정해진다. */
+.sm-step {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	margin-bottom: 6px;
+}
+
+.sm-step--done {
+	border-color: var(--accent);
+}
+
+.sm-step--next {
+	box-shadow: 0 0 0 2px var(--accent) inset;
+}
+
+.sm-step__no {
+	flex: 0 0 26px;
+	height: 26px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 13px;
+	font-weight: 700;
+	background: var(--bg);
+	color: var(--text-muted);
+	border: 1px solid var(--border);
+}
+
+.sm-step--done .sm-step__no {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+
+.sm-step__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.sm-step__title {
+	font-weight: 600;
+	font-size: 14px;
+}

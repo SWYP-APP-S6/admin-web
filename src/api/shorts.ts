@@ -3,6 +3,8 @@ import { request } from "./client";
 import type {
 	ShortsClip,
 	ShortsCost,
+	ShortsMediaList,
+	ShortsRemoval,
 	ShortsHealth,
 	ShortsJob,
 	ShortsSource,
@@ -12,6 +14,38 @@ import type {
 
 export function fetchShortsHealth(): Promise<ShortsHealth> {
 	return request<ShortsHealth>("/admin/shorts/health");
+}
+
+export function fetchMedia(): Promise<ShortsMediaList> {
+	return request<ShortsMediaList>("/admin/shorts/media");
+}
+
+// 🔴 서버에서 파일과 파생물(청크·미리보기·클립)을 실제로 지운다. 되돌릴 수 없다.
+export function deleteMedia(name: string): Promise<ShortsRemoval> {
+	return request<ShortsRemoval>(`/admin/shorts/media/${encodeURIComponent(name)}`, {
+		method: "DELETE",
+	});
+}
+
+export function registerMedia(name: string, title: string): Promise<ShortsJob> {
+	return request<ShortsJob>(`/admin/shorts/media/${encodeURIComponent(name)}/register`, {
+		method: "POST",
+		body: { title },
+	});
+}
+
+export function createSourceFromUrl(url: string): Promise<ShortsJob> {
+	return request<ShortsJob>("/admin/shorts/sources/from-url", {
+		method: "POST",
+		body: { url },
+	});
+}
+
+export function createChunk(sourceId: number, startSec: number, endSec: number): Promise<ShortsJob> {
+	return request<ShortsJob>(`/admin/shorts/sources/${sourceId}/chunks`, {
+		method: "POST",
+		body: { startSec, endSec },
+	});
 }
 
 export function fetchShortsSources(): Promise<ShortsSource[]> {
