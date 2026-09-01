@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
+import { KakaoTestPage } from "./pages/KakaoTestPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
@@ -45,6 +46,7 @@ export default function App() {
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/shorts" element={<ShortsPage />} />
+						<Route path="/kakao-test" element={<KakaoTestPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
 					<Route path="*" element={<Navigate to="/recipes" replace />} />
