@@ -829,3 +829,34 @@ img {
 	font-weight: 600;
 	font-size: 14px;
 }
+
+/* 카카오 로그인 테스트 페이지 */
+.role-toggle {
+	display: flex;
+	gap: 8px;
+}
+
+.checkbox-field {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.checkbox-field input {
+	margin-top: 3px;
+}
+
+.token-box {
+	margin: 0;
+	padding: 12px;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+	line-height: 1.6;
+	word-break: break-all;
+	white-space: pre-wrap;
+}

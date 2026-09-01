@@ -81,6 +81,26 @@ export interface RecipeDetail {
 
 export type UserRole = "CONSUMER" | "OWNER";
 
+export interface KakaoLoginResult {
+	registered: boolean;
+	accessToken: string | null;
+	refreshToken: string | null;
+	signupToken: string | null;
+}
+
+export interface UserTokenResponse {
+	accessToken: string;
+	refreshToken: string;
+}
+
+export interface UserSignupPayload {
+	signupToken: string;
+	serviceTermsAgreed: boolean;
+	privacyTermsAgreed: boolean;
+	locationTermsAgreed: boolean;
+	marketingOptIn: boolean;
+}
+
 export interface UserSummary {
 	id: number;
 	role: UserRole;
