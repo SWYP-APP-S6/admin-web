@@ -7,7 +7,6 @@ import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
-import { ShortsPage } from "./pages/ShortsPage";
 import { StoreListPage } from "./pages/StoreListPage";
 import { UserListPage } from "./pages/UserListPage";
 
@@ -45,7 +44,6 @@ export default function App() {
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
-						<Route path="/shorts" element={<ShortsPage />} />
 						<Route path="/kakao-test" element={<KakaoTestPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
