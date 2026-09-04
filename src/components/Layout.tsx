@@ -5,7 +5,6 @@ const NAV_ITEMS = [
 	{ to: "/recipes", label: "레시피" },
 	{ to: "/users", label: "유저" },
 	{ to: "/stores", label: "가게" },
-	{ to: "/shorts", label: "숏폼 (베타)" },
 	{ to: "/kakao-test", label: "카카오 로그인 테스트" },
 ];
 
