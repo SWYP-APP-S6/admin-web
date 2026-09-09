@@ -327,7 +327,7 @@ export function BrowseTestPage() {
 			{stores.data && (
 				<>
 					<p className="page-count">
-						총 {stores.data.totalCount}곳
+						총 {stores.data.totalStoreCount}곳
 						{stores.data.truncated && " · 상한 초과로 일부만 표시 (truncated)"}
 					</p>
 					{stores.data.stores.length === 0 ? (

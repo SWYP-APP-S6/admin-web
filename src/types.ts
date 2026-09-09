@@ -185,7 +185,7 @@ export interface NearbyStoreMarker {
 }
 
 export interface NearbyStores {
-	totalCount: number;
+	totalStoreCount: number;
 	truncated: boolean;
 	stores: NearbyStoreMarker[];
 }
