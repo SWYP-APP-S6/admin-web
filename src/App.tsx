@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
+import { BrowseTestPage } from "./pages/BrowseTestPage";
 import { KakaoTestPage } from "./pages/KakaoTestPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
@@ -44,6 +45,7 @@ export default function App() {
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
+						<Route path="/browse-test" element={<BrowseTestPage />} />
 						<Route path="/kakao-test" element={<KakaoTestPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>

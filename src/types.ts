@@ -137,3 +137,69 @@ export interface StoreDetail extends StoreSummary {
 	businessRegistrationNumber: string | null;
 	applicationNote: string | null;
 }
+
+export type ProductCategory =
+	| "VEGETABLE"
+	| "FRUIT"
+	| "MEAT"
+	| "SEAFOOD"
+	| "SIDE_DISH"
+	| "ETC";
+
+export type NearbyProductSort = "DISTANCE" | "PICKUP_DEADLINE";
+
+export interface NearbyProduct {
+	id: number;
+	name: string;
+	photoUrl: string;
+	category: ProductCategory;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	availableQty: number;
+	pickupEndAt: string;
+}
+
+export interface NearbyStoreGroup {
+	storeId: number;
+	storeName: string;
+	distanceMeters: number;
+	walkingMinutes: number;
+	productCount: number;
+	hasMoreProducts: boolean;
+	earliestPickupEndAt: string;
+	products: NearbyProduct[];
+}
+
+export interface NearbyProducts {
+	totalProductCount: number;
+	stores: PageResponse<NearbyStoreGroup>;
+}
+
+export interface NearbyStoreMarker {
+	storeId: number;
+	name: string;
+	latitude: number;
+	longitude: number;
+	sellableProductCount: number;
+}
+
+export interface NearbyStores {
+	totalCount: number;
+	truncated: boolean;
+	stores: NearbyStoreMarker[];
+}
+
+export interface StoreProducts {
+	storeId: number;
+	name: string;
+	latitude: number;
+	longitude: number;
+	/** 위치를 넘기지 않으면 null. */
+	distanceMeters: number | null;
+	walkingMinutes: number | null;
+	businessCloseTime: string;
+	earliestPickupEndAt: string | null;
+	productCount: number;
+	products: NearbyProduct[];
+}
