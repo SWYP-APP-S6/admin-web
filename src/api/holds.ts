@@ -29,3 +29,7 @@ export function createHold(
 		accessToken,
 	});
 }
+
+export function cancelHold(holdId: number, accessToken: string): Promise<HoldDetail> {
+	return request<HoldDetail>(`/holds/${holdId}/cancel`, { method: "POST", accessToken });
+}

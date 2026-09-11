@@ -1007,3 +1007,15 @@ img {
 .picker__store .table__muted {
 	font-size: 12px;
 }
+
+.phone__cta--ghost {
+	background: var(--surface);
+	color: var(--text-muted);
+	border: 1px solid var(--border);
+	font-weight: 600;
+}
+
+.phone__cta--ghost:hover:not(:disabled) {
+	border-color: var(--danger);
+	color: var(--danger);
+}
