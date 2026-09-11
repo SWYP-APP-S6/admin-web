@@ -60,13 +60,17 @@ interface RequestOptions {
 	body?: unknown;
 	// 인증 흐름 자체(로그인/갱신)는 401 을 받아도 재시도하지 않는다. 무한 재귀가 된다.
 	retryOnUnauthorized?: boolean;
+	// 관리자 토큰 대신 쓸 토큰. 소비자 전용 API 를 호출할 때 넘긴다 — 이 경우 401 이 나도
+	// 관리자 refresh 로 되살릴 수 없으므로 재시도하지 않는다.
+	accessToken?: string;
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-	const { method = "GET", body, retryOnUnauthorized = true } = options;
+	const { method = "GET", body, accessToken: override } = options;
+	const retryOnUnauthorized = override ? false : options.retryOnUnauthorized !== false;
 
 	const headers: Record<string, string> = {};
-	const accessToken = getAccessToken();
+	const accessToken = override ?? getAccessToken();
 	if (accessToken) {
 		headers.Authorization = `Bearer ${accessToken}`;
 	}

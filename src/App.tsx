@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { BrowseTestPage } from "./pages/BrowseTestPage";
+import { HoldTestPage } from "./pages/HoldTestPage";
 import { KakaoTestPage } from "./pages/KakaoTestPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
@@ -46,6 +47,7 @@ export default function App() {
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/browse-test" element={<BrowseTestPage />} />
+						<Route path="/hold-test" element={<HoldTestPage />} />
 						<Route path="/kakao-test" element={<KakaoTestPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>

@@ -203,3 +203,86 @@ export interface StoreProducts {
 	productCount: number;
 	products: NearbyProduct[];
 }
+
+export type HoldButtonState = "AVAILABLE" | "ALREADY_HOLDING" | "SOLD_OUT" | "CLOSED";
+
+export type ProductStatus = "ON_SALE" | "SOLD_OUT" | "CLOSED";
+
+export type HoldStatus = "HOLDING" | "COMPLETED" | "CANCELED" | "EXPIRED";
+
+export interface RecipeSuggestion {
+	id: number;
+	title: string;
+	imageThumbUrl: string | null;
+	cookTimeMinutes: number | null;
+	ingredientNames: string[];
+}
+
+export interface ProductBrowseDetail {
+	id: number;
+	name: string;
+	category: ProductCategory;
+	tags: string[];
+	photoUrls: string[];
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	availableQty: number;
+	pickupStartAt: string;
+	pickupEndAt: string;
+	status: ProductStatus;
+	holdButton: HoldButtonState;
+	/** 내가 진행 중인 찜. 없으면 null. */
+	myHoldId: number | null;
+	store: {
+		id: number;
+		name: string;
+		address: string;
+		addressDetail: string | null;
+		phone: string;
+		latitude: number;
+		longitude: number;
+		distanceMeters: number | null;
+		walkingMinutes: number | null;
+		businessOpenTime: string;
+		businessCloseTime: string;
+		openNow: boolean;
+	};
+	recipes: RecipeSuggestion[];
+}
+
+export interface HoldDetail {
+	id: number;
+	status: HoldStatus;
+	qty: number;
+	unitPrice: number;
+	totalPrice: number;
+	heldAt: string;
+	expiresAt: string;
+	/** 서버 기준 현재 시각. 클라이언트 시계가 틀어져도 카운트다운이 맞도록 쓴다. */
+	serverTime: string;
+	completedAt: string | null;
+	canceledAt: string | null;
+	canceledBy: "USER" | "OWNER" | null;
+	cancelReason: string | null;
+	product: {
+		id: number;
+		name: string;
+		photoUrl: string;
+		originalPrice: number;
+		salePrice: number;
+		discountRate: number;
+		status: ProductStatus;
+	};
+	store: {
+		id: number;
+		name: string;
+		address: string;
+		addressDetail: string | null;
+		phone: string;
+		latitude: number;
+		longitude: number;
+		businessOpenTime: string;
+		businessCloseTime: string;
+	};
+}
