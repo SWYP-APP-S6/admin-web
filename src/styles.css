@@ -1041,3 +1041,133 @@ img {
 .credits strong {
 	margin-left: 4px;
 }
+
+/* 계정·알림함 테스트 */
+
+.kv {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 16px;
+	margin: 0;
+	font-size: 13px;
+}
+
+.kv dt {
+	color: var(--text-muted);
+}
+
+.kv dd {
+	margin: 0;
+	color: var(--text);
+}
+
+.notice-row {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	text-align: left;
+	font: inherit;
+	color: var(--text-muted);
+	cursor: default;
+}
+
+/* 읽지 않은 알림만 누를 수 있다 — 읽음 처리는 되돌릴 수 없어 커서로 구분해 둔다. */
+.notice-row--unread {
+	border-color: var(--accent);
+	background: var(--bg);
+	cursor: pointer;
+}
+
+.notice-row--unread:hover {
+	box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.notice-row__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	color: var(--text);
+	font-size: 14px;
+}
+
+.notice-row__body {
+	font-size: 13px;
+	color: var(--text);
+}
+
+.notice-row__foot {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.history {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-height: 55vh;
+	overflow-y: auto;
+	margin: -4px;
+	padding: 4px;
+}
+
+.history__item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	font-size: 13px;
+}
+
+.history__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	color: var(--text);
+	font-weight: 600;
+}
+
+.history__meta {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.tag--completed {
+	background: #e7f4ec;
+	color: #1f6f4a;
+}
+
+.tag--expired {
+	background: #eceef1;
+	color: #5b626b;
+}
+
+.tabs {
+	display: flex;
+	gap: 6px;
+}
+
+.tabs__tab {
+	flex: 1;
+	padding: 6px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	font-size: 13px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.tabs__tab--active {
+	border-color: var(--accent);
+	color: var(--text);
+	font-weight: 600;
+}

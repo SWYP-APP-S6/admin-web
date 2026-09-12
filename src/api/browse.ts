@@ -12,6 +12,7 @@ export function nearbyProductsPath(params: {
 	lng: number;
 	category?: ProductCategory;
 	sort: NearbyProductSort;
+	radiusMeters?: number;
 	page: number;
 	size: number;
 }): string {
@@ -24,6 +25,10 @@ export function nearbyProductsPath(params: {
 	});
 	if (params.category) {
 		query.set("category", params.category);
+	}
+	// 생략하면 서버 기본값(browse.nearby-radius-meters)을 쓴다. 허용 범위는 100~5000m.
+	if (params.radiusMeters !== undefined) {
+		query.set("radiusMeters", String(params.radiusMeters));
 	}
 	return `/products/nearby?${query}`;
 }

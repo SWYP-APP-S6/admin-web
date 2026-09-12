@@ -100,6 +100,7 @@ export interface UserSignupPayload {
 	serviceTermsAgreed: boolean;
 	privacyTermsAgreed: boolean;
 	locationTermsAgreed: boolean;
+	thirdPartyTermsAgreed: boolean;
 	marketingOptIn: boolean;
 }
 
@@ -294,6 +295,8 @@ export interface HoldDetail {
 		longitude: number;
 		businessOpenTime: string;
 		businessCloseTime: string;
+		/** 지금이 영업 요일·영업 시간 안인지. 서버가 Asia/Seoul 기준으로 판정한다. */
+		openNow: boolean;
 	};
 	items: HoldItem[];
 }
@@ -304,4 +307,76 @@ export interface ActiveHoldResponse {
 	cancelsLeft: number;
 	/** 다음 1회가 충전되는 시각. 가득 차 있으면 null. */
 	nextCancelCreditAt: string | null;
+}
+
+export interface HoldSummaryItem {
+	productId: number;
+	name: string;
+	photoUrl: string;
+	qty: number;
+	lineTotal: number;
+}
+
+/** 찜 내역의 한 줄. 상세(HoldDetail)와 달리 가게 블록 대신 이름만 들고 온다. */
+export interface HoldSummary {
+	id: number;
+	status: HoldStatus;
+	storeId: number;
+	storeName: string;
+	totalQty: number;
+	totalPrice: number;
+	items: HoldSummaryItem[];
+	heldAt: string;
+	expiresAt: string;
+	completedAt: string | null;
+	canceledAt: string | null;
+	canceledBy: "USER" | "OWNER" | null;
+}
+
+export interface HoldHistory {
+	/** 목록의 status 도 지연 만료로 판정되므로 카운트다운은 이 시각을 기준으로 센다. */
+	serverTime: string;
+	holds: PageResponse<HoldSummary>;
+}
+
+export type NotificationType =
+	| "HOLD_CREATED"
+	| "HOLD_EXPIRING_SOON"
+	| "HOLD_EXPIRED"
+	| "PICKUP_COMPLETED"
+	| "HOLD_UNCONFIRMED"
+	| "HOLD_CANCELED_BY_OWNER"
+	| "NEARBY_PRODUCT_REGISTERED"
+	| "STOCK_RECONFIRM_REQUEST"
+	| "NEW_HOLD_RECEIVED";
+
+export interface AppNotification {
+	id: number;
+	type: NotificationType;
+	title: string;
+	body: string;
+	deepLink: string | null;
+	/** 읽지 않았으면 null. */
+	readAt: string | null;
+	notifiedAt: string;
+}
+
+export interface NotificationInbox {
+	unreadCount: number;
+	notifications: PageResponse<AppNotification>;
+}
+
+export interface NotificationsReadResult {
+	markedCount: number;
+}
+
+/** GET /users/me — 소비자·점주 공용. 약관은 스키마가 항목별로 남기지 않아 시각 한 건뿐이다. */
+export interface Me {
+	id: number;
+	role: UserRole;
+	nickname: string;
+	phone: string | null;
+	marketingOptIn: boolean;
+	termsAgreedAt: string;
+	joinedAt: string;
 }

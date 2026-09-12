@@ -25,6 +25,7 @@ export function KakaoTestPage() {
 	const [serviceTermsAgreed, setServiceTermsAgreed] = useState(false);
 	const [privacyTermsAgreed, setPrivacyTermsAgreed] = useState(false);
 	const [locationTermsAgreed, setLocationTermsAgreed] = useState(false);
+	const [thirdPartyTermsAgreed, setThirdPartyTermsAgreed] = useState(false);
 	const [marketingOptIn, setMarketingOptIn] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -110,6 +111,7 @@ export function KakaoTestPage() {
 				serviceTermsAgreed,
 				privacyTermsAgreed,
 				locationTermsAgreed,
+				thirdPartyTermsAgreed,
 				marketingOptIn,
 			});
 			setStep({
@@ -211,6 +213,14 @@ export function KakaoTestPage() {
 							onChange={(event) => setLocationTermsAgreed(event.target.checked)}
 						/>
 						(필수) 위치기반 서비스 이용약관 동의
+					</label>
+					<label className="checkbox-field">
+						<input
+							type="checkbox"
+							checked={thirdPartyTermsAgreed}
+							onChange={(event) => setThirdPartyTermsAgreed(event.target.checked)}
+						/>
+						(필수) 개인정보 제3자 제공 동의
 					</label>
 					<label className="checkbox-field">
 						<input
