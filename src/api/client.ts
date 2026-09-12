@@ -1,7 +1,11 @@
 import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from "../auth/tokens";
 import type { ApiResponse, ErrorBody, TokenResponse } from "../types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+// `??` 가 아니라 `||` 다. .env 의 빈 값은 undefined 가 아니라 빈 문자열로 들어와서, `??` 로는
+// 폴백이 걸리지 않는다 -- BASE_URL 이 "" 가 되면 모든 요청이 dev 서버 자신에게 가고 404 를
+// HTML 로 받는다(에러 envelope 이 아니라 code 도 없다). .env.example 은 처음부터 "비워두면
+// /api 로 떨어진다"고 적고 있었으므로, 코드를 그 설명에 맞춘다.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export class ApiError extends Error {
 	readonly status: number;
