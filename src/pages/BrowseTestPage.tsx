@@ -13,8 +13,11 @@ import type { NearbyProduct, NearbyProductSort, ProductCategory, StoreProducts }
 
 const PAGE_SIZE = 20;
 
-// 목록 반경이 1km 로 고정이라, 데모 가게 3곳을 남북으로 700m 씩 벌려두고 기준 위치만 옮기면
-// 3 → 2 → 1 → 0 곳으로 줄어드는 것을 눈으로 확인할 수 있다.
+// 서버가 받는 범위는 100~5000m. 생략하면 browse.nearby-radius-meters(1000).
+const RADII = [500, 1000, 2000, 5000];
+
+// 데모 가게 3곳을 남북으로 700m 씩 벌려두었다. 기본 반경 1km 에서 기준 위치만 옮기면
+// 3 → 2 → 1 → 0 곳으로 줄고, 반경을 넓히면 다시 잡히는 것을 눈으로 확인할 수 있다.
 const PRESETS = [
 	{ label: "매장 3곳", lat: 37.5069, lng: 127.0365 },
 	{ label: "2곳", lat: 37.5006, lng: 127.0365 },
@@ -111,6 +114,7 @@ export function BrowseTestPage() {
 	const [lngInput, setLngInput] = useState(String(PRESETS[0].lng));
 	const [category, setCategory] = useState<"" | ProductCategory>("");
 	const [sort, setSort] = useState<NearbyProductSort>("DISTANCE");
+	const [radiusMeters, setRadiusMeters] = useState(1000);
 	const [viewportMeters, setViewportMeters] = useState(1000);
 	const [sheet, setSheet] = useState<StoreProducts | null>(null);
 	const [sheetError, setSheetError] = useState<Error | null>(null);
@@ -126,12 +130,13 @@ export function BrowseTestPage() {
 					lng,
 					category: category || undefined,
 					sort,
+					radiusMeters,
 					page: 0,
 					size: PAGE_SIZE,
 				}),
-			[lat, lng, category, sort],
+			[lat, lng, category, sort, radiusMeters],
 		),
-		[lat, lng, category, sort],
+		[lat, lng, category, sort, radiusMeters],
 	);
 
 	const stores = useAsync(
@@ -178,9 +183,10 @@ export function BrowseTestPage() {
 			</div>
 
 			<p className="notice">
-				데모 가게 3곳이 남북으로 700m 간격입니다. 목록은 <strong>반경 1km 고정</strong>이라
-				기준 위치를 내리면 3 → 2 → 1 → 0곳으로 줄어듭니다. 지도는 반경이 아니라 아래에서 고른{" "}
-				<strong>뷰포트(bbox)</strong>를 씁니다.
+				데모 가게 3곳이 남북으로 700m 간격입니다. 목록은 <code>radiusMeters</code>(기본 1km,
+				100~5000m)를 쓰므로 기준 위치를 내리면 3 → 2 → 1 → 0곳으로 줄고 반경을 넓히면 다시
+				잡힙니다. 지도는 반경이 아니라 아래에서 고른 <strong>뷰포트(bbox)</strong>를 씁니다.
+				목록·지도 모두 <strong>오늘 휴무인 가게는 빠집니다.</strong>
 			</p>
 
 			<div className="form-card" style={{ marginBottom: 24 }}>
@@ -234,6 +240,7 @@ export function BrowseTestPage() {
 					lng,
 					category: category || undefined,
 					sort,
+					radiusMeters,
 					page: 0,
 					size: PAGE_SIZE,
 				})}
@@ -248,6 +255,18 @@ export function BrowseTestPage() {
 						onClick={() => setCategory(item.value)}
 					>
 						{item.label}
+					</button>
+				))}
+			</div>
+			<div className="filters" style={{ marginBottom: 8 }}>
+				{RADII.map((meters) => (
+					<button
+						key={meters}
+						type="button"
+						className={radiusMeters === meters ? "chip chip--active" : "chip"}
+						onClick={() => setRadiusMeters(meters)}
+					>
+						{meters >= 1000 ? `${meters / 1000}km` : `${meters}m`}
 					</button>
 				))}
 			</div>
@@ -272,7 +291,10 @@ export function BrowseTestPage() {
 						총 {products.data.totalProductCount}개 · 매장 {products.data.stores.totalElements}곳
 					</p>
 					{products.data.stores.content.length === 0 && (
-						<p className="state">반경 1km 안에 판매중인 상품이 없습니다.</p>
+						<p className="state">
+							반경 {radiusMeters >= 1000 ? `${radiusMeters / 1000}km` : `${radiusMeters}m`} 안에
+							오늘 영업하는 가게의 판매중인 상품이 없습니다.
+						</p>
 					)}
 					{products.data.stores.content.map((group) => (
 						<div className="card" key={group.storeId}>
