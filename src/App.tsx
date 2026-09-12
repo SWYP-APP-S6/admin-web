@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
+import { AccountTestPage } from "./pages/AccountTestPage";
 import { BrowseTestPage } from "./pages/BrowseTestPage";
 import { HoldTestPage } from "./pages/HoldTestPage";
 import { KakaoTestPage } from "./pages/KakaoTestPage";
@@ -48,6 +49,7 @@ export default function App() {
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/browse-test" element={<BrowseTestPage />} />
 						<Route path="/hold-test" element={<HoldTestPage />} />
+						<Route path="/account-test" element={<AccountTestPage />} />
 						<Route path="/kakao-test" element={<KakaoTestPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
