@@ -7,18 +7,21 @@ export class ApiError extends Error {
 	readonly status: number;
 	readonly code: string;
 	readonly fieldErrors: Record<string, string> | null;
+	readonly retryAt: string | null;
 
 	constructor(
 		status: number,
 		code: string,
 		message: string,
 		fieldErrors: Record<string, string> | null = null,
+		retryAt: string | null = null,
 	) {
 		super(message);
 		this.name = "ApiError";
 		this.status = status;
 		this.code = code;
 		this.fieldErrors = fieldErrors;
+		this.retryAt = retryAt;
 	}
 }
 
@@ -100,6 +103,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 			error?.code ?? "UNKNOWN",
 			error?.message ?? response.statusText,
 			error?.fieldErrors ?? null,
+			error?.retryAt ?? null,
 		);
 	}
 

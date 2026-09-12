@@ -2,14 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchNearbyProducts } from "../api/browse";
 import { ApiError } from "../api/client";
 import { issueTestToken } from "../api/devToken";
-import { cancelHold, createHold, fetchProductDetail } from "../api/holds";
+import { addToHold, cancelHold, fetchActiveHold, fetchProductDetail } from "../api/holds";
 import { clearConsumerToken, getConsumerToken, storeConsumerToken } from "../auth/consumerToken";
 import { useAsync } from "../hooks/useAsync";
-import type { HoldButtonState, ProductBrowseDetail, HoldDetail } from "../types";
+import type { HoldButtonState, HoldDetail, ProductBrowseDetail } from "../types";
 
-// 서버 정책(hold.user-qty-limit)과 같은 값. 화면은 보기 좋으라고 막아둘 뿐이고, 초과 요청의
-// 최종 판정은 서버가 한다 — 값을 바꿔 400 HOLD_LIMIT_EXCEEDED 를 직접 확인할 수 있다.
-const MAX_QTY = 3;
+// 서버 정책(hold.user-qty-limit)과 같은 값. 상품 하나당 상한이고, 더 담기로 우회되지 않는다.
+const MAX_QTY_PER_PRODUCT = 3;
+
+// 서버 정책(hold.cancel-credit-max)과 같은 값. 점 개수를 그리는 데만 쓴다.
+const MAX_CANCEL_CREDITS = 3;
 
 const PRESETS = [
 	{ label: "매장 3곳", lat: 37.5069, lng: 127.0365 },
@@ -17,9 +19,10 @@ const PRESETS = [
 	{ label: "1곳", lat: 37.495, lng: 127.0365 },
 ];
 
-const HOLD_BUTTON_LABEL: Record<HoldButtonState, string> = {
+const CTA_LABEL: Record<HoldButtonState, string> = {
 	AVAILABLE: "찜하기",
-	ALREADY_HOLDING: "이미 찜한 상품이에요",
+	ALREADY_HOLDING: "이미 담은 상품이에요",
+	OTHER_STORE: "다른 가게에서 찜이 진행 중이에요",
 	SOLD_OUT: "품절되었어요",
 	CLOSED: "픽업이 마감되었어요",
 };
@@ -30,9 +33,7 @@ function won(value: number): string {
 
 function clockLabel(ms: number): string {
 	const total = Math.max(0, Math.floor(ms / 1000));
-	const minutes = String(Math.floor(total / 60)).padStart(2, "0");
-	const seconds = String(total % 60).padStart(2, "0");
-	return `${minutes}:${seconds}`;
+	return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function timeLabel(isoLocalDateTime: string): string {
@@ -43,15 +44,41 @@ function asError(caught: unknown): Error {
 	return caught instanceof Error ? caught : new Error(String(caught));
 }
 
+// 종료된 찜의 문구는 서버가 내린 status 를 그대로 옮긴다 — 화면이 스스로 판정하지 않는다.
+function settledLabel(hold: HoldDetail): { clock: string; caption: string } {
+	if (hold.status === "EXPIRED") {
+		return { clock: "만료됨", caption: "시간이 지나 자동 취소됐어요" };
+	}
+	if (hold.status === "COMPLETED") {
+		return { clock: "수령 완료", caption: "픽업이 완료됐어요" };
+	}
+	return {
+		clock: "취소됨",
+		caption: hold.canceledBy === "OWNER" ? "점주가 취소했어요" : "내가 취소했어요",
+	};
+}
+
 function ErrorView({ error }: { error: Error }) {
 	const code = error instanceof ApiError ? error.code : null;
 	const fieldErrors = error instanceof ApiError ? error.fieldErrors : null;
+	const retryAt = error instanceof ApiError ? error.retryAt : null;
 	return (
 		<div className="state state--error" style={{ textAlign: "left", padding: "10px 0" }}>
 			<strong>
 				{code ? `${code} — ` : ""}
 				{error.message}
 			</strong>
+			{retryAt && (
+				<div style={{ marginTop: 4 }}>
+					{new Date(retryAt).toLocaleString("ko-KR", {
+						month: "numeric",
+						day: "numeric",
+						hour: "2-digit",
+						minute: "2-digit",
+					})}
+					부터 다시 담을 수 있어요
+				</div>
+			)}
 			{fieldErrors && (
 				<ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
 					{Object.entries(fieldErrors).map(([field, message]) => (
@@ -78,17 +105,16 @@ export function HoldTestPage() {
 	const [qty, setQty] = useState(1);
 	const [submitting, setSubmitting] = useState(false);
 	const [canceling, setCanceling] = useState(false);
+	const [refreshing, setRefreshing] = useState(false);
 	const [holdError, setHoldError] = useState<Error | null>(null);
-	// 서버 시각 기준으로 카운트다운하려고 응답을 받은 로컬 시각을 함께 들고 있는다.
+	// 진행 중인 찜은 계정당 하나뿐이다. 카운트다운은 serverTime 오프셋으로 화면이 센다.
 	const [hold, setHold] = useState<{ detail: HoldDetail; receivedAt: number } | null>(null);
 	const [tick, setTick] = useState(() => Date.now());
-	// 찜이 재고를 줄이므로 왼쪽 목록의 "N개"도 같이 다시 불러야 한다.
 	const [productsReload, setProductsReload] = useState(0);
+	const [credits, setCredits] = useState<{ left: number; nextAt: string | null } | null>(null);
 
 	const { lat, lng } = position;
 
-	// 상품 목록은 관리자 토큰으로 부른다 — 탐색 API 는 ADMIN 에게도 열려 있고, 여기서는
-	// "어떤 상품을 테스트할지" 고르는 용도라 소비자 신원이 필요 없다.
 	const nearby = useAsync(
 		useCallback(
 			() => fetchNearbyProducts({ lat, lng, sort: "DISTANCE", page: 0, size: 50 }),
@@ -98,12 +124,9 @@ export function HoldTestPage() {
 		[lat, lng, productsReload],
 	);
 
-	// 목록 API 가 매장 단위로 묶어 내려주므로(NearbyStoreGroup) 화면도 그 구조를 유지한다.
 	const storeGroups = nearby.data?.stores.content ?? [];
 	const productCount = storeGroups.reduce((sum, store) => sum + store.products.length, 0);
 
-	// 상세는 소비자 토큰으로 부른다 — holdButton·myHoldId 는 "보는 사람이 누구인가"에 따라
-	// 달라지고, 관리자·게스트 토큰의 주체 id 는 users 의 누구도 가리키지 않는다.
 	const loadDetail = useCallback(
 		async (id: number) => {
 			try {
@@ -118,10 +141,28 @@ export function HoldTestPage() {
 		[token, lat, lng],
 	);
 
+	const loadActiveHold = useCallback(async () => {
+		if (!token) {
+			setHold(null);
+			return null;
+		}
+		try {
+			const active = await fetchActiveHold(token);
+			setHold(active.hold ? { detail: active.hold, receivedAt: Date.now() } : null);
+			setCredits({ left: active.cancelsLeft, nextAt: active.nextCancelCreditAt });
+			return active.hold;
+		} catch {
+			return null;
+		}
+	}, [token]);
+
+	// 새로고침해도 카운트다운이 이어지도록, 열자마자 진행 중인 찜을 서버에 묻는다.
+	useEffect(() => {
+		void loadActiveHold();
+	}, [loadActiveHold]);
+
 	useEffect(() => {
 		if (productId !== null) {
-			// 상태 변경은 await 뒤, 즉 서버 응답이 온 다음에만 일어난다 — 렌더 연쇄가 아니라
-			// 외부 시스템 동기화다.
 			// eslint-disable-next-line react/set-state-in-effect
 			void loadDetail(productId);
 		}
@@ -135,27 +176,19 @@ export function HoldTestPage() {
 		return () => window.clearInterval(timer);
 	}, [hold]);
 
-	// 만료 배치가 찜을 풀고 재고를 돌려놓는 것을 화면에서 보려면 상세를 다시 불러야 한다.
-	useEffect(() => {
-		if (!hold || hold.detail.status !== "HOLDING" || productId === null) {
-			return;
-		}
-		const timer = window.setInterval(() => void loadDetail(productId), 5000);
-		return () => window.clearInterval(timer);
-	}, [hold, productId, loadDetail]);
-
 	const remainingMs = hold
 		? new Date(hold.detail.expiresAt).getTime() -
 			(new Date(hold.detail.serverTime).getTime() + (tick - hold.receivedAt))
 		: 0;
 
-	function selectProduct(id: number) {
-		setProductId(id);
-		setSheetOpen(false);
-		setQty(1);
-		setHold(null);
-		setHoldError(null);
-	}
+	const activeHold = hold && hold.detail.status === "HOLDING" ? hold.detail : null;
+	const heldQtyOfProduct =
+		activeHold && detail
+			? (activeHold.items.find((item) => item.productId === detail.id)?.qty ?? 0)
+			: 0;
+	const maxQty = detail
+		? Math.min(detail.availableQty, MAX_QTY_PER_PRODUCT - heldQtyOfProduct)
+		: MAX_QTY_PER_PRODUCT;
 
 	async function requestTestToken() {
 		setIssuing(true);
@@ -165,11 +198,7 @@ export function HoldTestPage() {
 			storeConsumerToken(issued.accessToken);
 			setToken(issued.accessToken);
 			setIdentity({ userId: issued.userId, nickname: issued.nickname });
-			setHold(null);
 			setHoldError(null);
-			if (productId !== null) {
-				await loadDetail(productId);
-			}
 		} catch (caught) {
 			setTokenError(asError(caught));
 		} finally {
@@ -182,6 +211,13 @@ export function HoldTestPage() {
 		setToken(null);
 		setIdentity(null);
 		setHold(null);
+	}
+
+	function selectProduct(id: number) {
+		setProductId(id);
+		setSheetOpen(false);
+		setQty(1);
+		setHoldError(null);
 	}
 
 	function openSheet() {
@@ -197,14 +233,14 @@ export function HoldTestPage() {
 		setSubmitting(true);
 		setHoldError(null);
 		try {
-			const created = await createHold(productId, qty, token);
-			setHold({ detail: created, receivedAt: Date.now() });
-			setTick(Date.now());
+			setHold({ detail: await addToHold(productId, qty, token), receivedAt: Date.now() });
 			setSheetOpen(false);
 			setProductsReload((count) => count + 1);
 			await loadDetail(productId);
+			await loadActiveHold();
 		} catch (caught) {
 			setHoldError(asError(caught));
+			await loadDetail(productId);
 		} finally {
 			setSubmitting(false);
 		}
@@ -217,41 +253,53 @@ export function HoldTestPage() {
 		setCanceling(true);
 		setHoldError(null);
 		try {
-			setHold({ detail: await cancelHold(hold.detail.id, token), receivedAt: Date.now() });
+			const canceled = await cancelHold(hold.detail.id, token);
 			setProductsReload((count) => count + 1);
+			await loadActiveHold();
+			setHold({ detail: canceled, receivedAt: Date.now() });
 		} catch (caught) {
 			setHoldError(asError(caught));
 		} finally {
 			setCanceling(false);
-			// 성공이든 409 든 상세를 다시 읽는다 — 재고와 holdButton 은 서버가 정한다.
 			if (productId !== null) {
 				await loadDetail(productId);
 			}
 		}
 	}
 
-	function backToProduct() {
-		setHold(null);
-		setHoldError(null);
-		setProductsReload((count) => count + 1);
+	async function refreshFromServer() {
+		setRefreshing(true);
+		try {
+			await loadActiveHold();
+			setProductsReload((count) => count + 1);
+			if (productId !== null) {
+				await loadDetail(productId);
+			}
+		} finally {
+			setRefreshing(false);
+		}
 	}
 
-	const maxQty = detail ? Math.min(detail.availableQty, MAX_QTY) : MAX_QTY;
+	function openHeldProduct() {
+		if (activeHold && activeHold.items.length > 0) {
+			selectProduct(activeHold.items[0].productId);
+		}
+	}
 
 	return (
 		<>
 			<div className="page-head">
 				<h1 className="page-title">찜 API 테스트</h1>
 				<span className="page-count">
-					{productId === null ? "상품 미선택" : `상품 #${productId}`}
+					{activeHold ? `진행 중 · ${activeHold.store.name}` : "진행 중인 찜 없음"}
 				</span>
 			</div>
 
 			<p className="notice">
-				소비자 화면(상품 상세 → 수량 선택 → 찜 카운트다운)을 그대로 재현합니다. 찜은{" "}
-				<strong>소비자 토큰</strong>이 있어야 해서(관리자 토큰으로는 403) 왼쪽에서 테스트용
-				토큰을 발급받아 씁니다. 찜을 걸어두면 상세를 5초마다 다시 불러, 만료 배치가 찜을
-				정리하고 재고가 돌아오는 것까지 화면에서 볼 수 있습니다.
+				찜은 <strong>한 가게에서의 한 번의 픽업</strong>입니다 — 같은 가게 상품은 같은 찜에 더
+				담기고, 진행 중인 찜은 계정당 하나뿐입니다. 카운트다운은 서버가 준{" "}
+				<code>expiresAt</code>·<code>serverTime</code>으로 화면이 셉니다(폴링 없음). 배치가
+				정리한 결과는 <strong>서버 상태 확인</strong>으로 봅니다.
 			</p>
 
 			<div className="hold-lab">
@@ -285,7 +333,7 @@ export function HoldTestPage() {
 							<>
 								<p className="field__hint" style={{ margin: 0 }}>
 									로컬 백엔드가 테스트용 소비자 계정을 만들어 access 토큰을 내려줍니다
-									(<code>POST /dev/test-token</code>). 카카오 로그인은 필요 없습니다.
+									(<code>POST /dev/test-token</code>).
 								</p>
 								<button
 									className="button button--primary"
@@ -319,6 +367,62 @@ export function HoldTestPage() {
 						</p>
 					</section>
 
+					{credits && (
+						<section className="panel">
+							<h2 className="panel__title">취소 가능 횟수</h2>
+							<div className="credits">
+								{Array.from({ length: MAX_CANCEL_CREDITS }, (_, index) => (
+									<span
+										key={index}
+										className={index < credits.left ? "credits__dot credits__dot--left" : "credits__dot"}
+									/>
+								))}
+								<strong>{credits.left}회 남음</strong>
+							</div>
+							<p className="field__hint" style={{ margin: 0 }}>
+								{credits.nextAt
+									? `하루에 1회씩 최대 ${MAX_CANCEL_CREDITS}회까지 충전됩니다. 다음 충전 ${new Date(
+											credits.nextAt,
+										).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+									: `가득 차 있습니다. 취소하거나 노쇼가 확정되면 한 칸씩 줄어듭니다.`}
+							</p>
+						</section>
+					)}
+
+					{activeHold && (
+						<section className="panel">
+							<h2 className="panel__title">진행 중인 찜 · GET /holds/active</h2>
+							<div className="phone__row">
+								<strong>{activeHold.store.name}</strong>
+								찜 #{activeHold.id} · {activeHold.totalQty}개 · {won(activeHold.totalPrice)}
+							</div>
+							{activeHold.items.map((item) => (
+								<button
+									key={item.productId}
+									type="button"
+									className={
+										item.productId === productId
+											? "picker__item picker__item--active"
+											: "picker__item"
+									}
+									onClick={() => selectProduct(item.productId)}
+								>
+									<img className="picker__thumb" src={item.photoUrl} alt="" />
+									<span className="picker__name">
+										{item.name}
+										<br />
+										<span className="table__muted">
+											{item.qty}개 · {won(item.lineTotal)}
+										</span>
+									</span>
+								</button>
+							))}
+							<p className="field__hint" style={{ margin: 0 }}>
+								같은 가게 상품만 이 찜에 더 담을 수 있습니다.
+							</p>
+						</section>
+					)}
+
 					<section className="panel">
 						<h2 className="panel__title">상품 선택</h2>
 						{nearby.loading && <div className="state">불러오는 중…</div>}
@@ -336,23 +440,23 @@ export function HoldTestPage() {
 											{store.productCount}개
 										</span>
 									</div>
-									{store.products.map((product) => (
+									{store.products.map((item) => (
 										<button
-											key={product.id}
+											key={item.id}
 											type="button"
 											className={
-												product.id === productId
+												item.id === productId
 													? "picker__item picker__item--active"
 													: "picker__item"
 											}
-											onClick={() => selectProduct(product.id)}
+											onClick={() => selectProduct(item.id)}
 										>
-											<img className="picker__thumb" src={product.photoUrl} alt="" />
+											<img className="picker__thumb" src={item.photoUrl} alt="" />
 											<span className="picker__name">
-												{product.name}
+												{item.name}
 												<br />
 												<span className="table__muted">
-													{product.availableQty}개 · {product.discountRate}%
+													{item.availableQty}개 · {item.discountRate}%
 												</span>
 											</span>
 										</button>
@@ -438,57 +542,7 @@ export function HoldTestPage() {
 
 								{holdError && <ErrorView error={holdError} />}
 
-								{hold && hold.detail.status === "HOLDING" ? (
-									<>
-										<div
-											className={
-												remainingMs <= 0
-													? "countdown countdown--done"
-													: remainingMs < 5 * 60 * 1000
-														? "countdown countdown--hurry"
-														: "countdown countdown--calm"
-											}
-										>
-											<div className="countdown__clock">{clockLabel(remainingMs)}</div>
-											<div className="countdown__caption">
-												{remainingMs > 0
-													? `찜 #${hold.detail.id} · ${hold.detail.qty}개 · ${won(hold.detail.totalPrice)} 픽업 대기`
-													: detail.myHoldId === hold.detail.id
-														? `만료 시각이 지났습니다 — 배치가 찜 #${hold.detail.id}를 정리하면 재고가 돌아옵니다`
-														: `배치가 찜 #${hold.detail.id}를 정리했습니다 — 재고가 ${detail.availableQty}개로 돌아왔습니다`}
-											</div>
-											{remainingMs <= 0 && detail.myHoldId !== hold.detail.id && (
-												<button className="button button--small" type="button" onClick={backToProduct}>
-													다시 찜해보기
-												</button>
-											)}
-										</div>
-										{detail.myHoldId === hold.detail.id && (
-											<button
-												className="phone__cta phone__cta--ghost"
-												type="button"
-												disabled={canceling}
-												onClick={cancelCurrentHold}
-											>
-												{canceling ? "취소 중…" : "찜 취소"}
-											</button>
-										)}
-									</>
-								) : hold ? (
-									<div className="countdown countdown--done">
-										<div className="countdown__clock">
-											{hold.detail.status === "CANCELED" ? "취소됨" : hold.detail.status}
-										</div>
-										<div className="countdown__caption">
-											{`찜 #${hold.detail.id} · ${
-												hold.detail.canceledBy === "OWNER" ? "점주가 취소" : "내가 취소"
-											} · 재고가 ${detail.availableQty}개로 돌아왔습니다`}
-										</div>
-										<button className="button button--small" type="button" onClick={backToProduct}>
-											다시 찜해보기
-										</button>
-									</div>
-								) : sheetOpen ? (
+								{sheetOpen ? (
 									<div className="sheet">
 										<div className="stepper">
 											<span>수량</span>
@@ -513,31 +567,113 @@ export function HoldTestPage() {
 											</div>
 										</div>
 										<div className="phone__row">
-											<strong>결제 예정 금액</strong>
+											<strong>이 상품 금액</strong>
 											{won(detail.salePrice * qty)}
 										</div>
 										<p className="field__hint" style={{ margin: 0 }}>
-											찜은 15분 동안 유지되며(픽업 마감이 더 이르면 그때까지), 시간이 지나면
-											자동으로 취소됩니다. 1인 최대 {MAX_QTY}개.
+											{activeHold
+												? `기존 찜(${activeHold.store.name})에 더 담깁니다. 만료 시각은 ${clockLabel(
+														remainingMs,
+													)} 그대로예요.`
+												: "찜은 최대 15분 유지되며(픽업 마감이 더 이르면 그때까지), 지나면 자동 취소됩니다."}{" "}
+											상품당 최대 {MAX_QTY_PER_PRODUCT}개
+											{heldQtyOfProduct > 0 ? ` (이미 ${heldQtyOfProduct}개 담음)` : ""}.
 										</p>
 										<button
 											className="phone__cta phone__cta--confirm"
 											type="button"
-											disabled={submitting || !token}
+											disabled={submitting || !token || maxQty < 1}
 											onClick={submitHold}
 										>
-											{submitting ? "요청 중…" : `${qty}개 찜하기`}
+											{submitting ? "요청 중…" : activeHold ? `${qty}개 더 담기` : `${qty}개 찜하기`}
 										</button>
 									</div>
 								) : (
 									<button
 										className="phone__cta"
 										type="button"
-										disabled={detail.holdButton !== "AVAILABLE" || !token}
+										disabled={
+											!token ||
+											(detail.holdButton !== "AVAILABLE" &&
+												!(detail.holdButton === "ALREADY_HOLDING" && maxQty > 0))
+										}
 										onClick={openSheet}
 									>
-										{token ? HOLD_BUTTON_LABEL[detail.holdButton] : "소비자 토큰을 먼저 발급하세요"}
+										{!token
+											? "소비자 토큰을 먼저 발급하세요"
+											: detail.holdButton === "ALREADY_HOLDING" && maxQty > 0
+												? `더 담기 (이미 ${heldQtyOfProduct}개)`
+												: CTA_LABEL[detail.holdButton]}
 									</button>
+								)}
+
+								{detail.holdButton === "OTHER_STORE" && activeHold && (
+									<button className="button button--small" type="button" onClick={openHeldProduct}>
+										진행 중인 찜 보기 ({activeHold.store.name})
+									</button>
+								)}
+
+								{hold && (
+									<div className="sheet">
+										{hold.detail.status === "HOLDING" ? (
+											<>
+												<div
+													className={
+														remainingMs <= 0
+															? "countdown countdown--done"
+															: remainingMs < 5 * 60 * 1000
+																? "countdown countdown--hurry"
+																: "countdown countdown--calm"
+													}
+												>
+													<div className="countdown__clock">{clockLabel(remainingMs)}</div>
+													<div className="countdown__caption">
+														{remainingMs > 0
+															? `찜 #${hold.detail.id} · ${hold.detail.store.name} · ${hold.detail.totalQty}개 · ${won(hold.detail.totalPrice)}`
+															: "시간이 지나 자동 취소됐어요 — 재고 복원은 만료 배치가 합니다"}
+													</div>
+												</div>
+												<div className="row-actions" style={{ justifyContent: "center" }}>
+													{remainingMs > 0 ? (
+														<button
+															className="phone__cta phone__cta--ghost"
+															type="button"
+															disabled={canceling}
+															onClick={cancelCurrentHold}
+														>
+															{canceling ? "취소 중…" : "찜 취소 (전체)"}
+														</button>
+													) : (
+														<button
+															className="button button--small"
+															type="button"
+															disabled={refreshing}
+															onClick={refreshFromServer}
+														>
+															{refreshing ? "확인 중…" : "서버 상태 확인"}
+														</button>
+													)}
+												</div>
+											</>
+										) : (
+											<div className="countdown countdown--done">
+												<div className="countdown__clock">{settledLabel(hold.detail).clock}</div>
+												<div className="countdown__caption">
+													{`찜 #${hold.detail.id} · ${settledLabel(hold.detail).caption}`}
+												</div>
+												<button
+													className="button button--small"
+													type="button"
+													onClick={() => {
+														setHold(null);
+														setProductsReload((count) => count + 1);
+													}}
+												>
+													다시 담아보기
+												</button>
+											</div>
+										)}
+									</div>
 								)}
 							</div>
 						</div>

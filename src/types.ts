@@ -10,6 +10,8 @@ export interface ErrorBody {
 	code: string;
 	message: string;
 	fieldErrors: Record<string, string> | null;
+	/** 다시 시도할 수 있는 시각. 취소 가능 횟수를 다 썼을 때만 온다. */
+	retryAt?: string | null;
 }
 
 export interface PageResponse<T> {
@@ -204,7 +206,12 @@ export interface StoreProducts {
 	products: NearbyProduct[];
 }
 
-export type HoldButtonState = "AVAILABLE" | "ALREADY_HOLDING" | "SOLD_OUT" | "CLOSED";
+export type HoldButtonState =
+	| "AVAILABLE"
+	| "ALREADY_HOLDING"
+	| "OTHER_STORE"
+	| "SOLD_OUT"
+	| "CLOSED";
 
 export type ProductStatus = "ON_SALE" | "SOLD_OUT" | "CLOSED";
 
@@ -232,7 +239,7 @@ export interface ProductBrowseDetail {
 	pickupEndAt: string;
 	status: ProductStatus;
 	holdButton: HoldButtonState;
-	/** 내가 진행 중인 찜. 없으면 null. */
+	/** 이 상품이 담긴 내 찜. 아니면 null. */
 	myHoldId: number | null;
 	store: {
 		id: number;
@@ -251,29 +258,32 @@ export interface ProductBrowseDetail {
 	recipes: RecipeSuggestion[];
 }
 
+export interface HoldItem {
+	productId: number;
+	name: string;
+	photoUrl: string;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	status: ProductStatus;
+	qty: number;
+	lineTotal: number;
+}
+
+/** 찜 = 한 가게에서의 한 번의 픽업. 상품이 여러 개 담긴다. */
 export interface HoldDetail {
 	id: number;
 	status: HoldStatus;
-	qty: number;
-	unitPrice: number;
+	totalQty: number;
 	totalPrice: number;
 	heldAt: string;
 	expiresAt: string;
-	/** 서버 기준 현재 시각. 클라이언트 시계가 틀어져도 카운트다운이 맞도록 쓴다. */
+	/** 서버 기준 현재 시각. 카운트다운은 이 오프셋으로 앱이 센다. */
 	serverTime: string;
 	completedAt: string | null;
 	canceledAt: string | null;
 	canceledBy: "USER" | "OWNER" | null;
 	cancelReason: string | null;
-	product: {
-		id: number;
-		name: string;
-		photoUrl: string;
-		originalPrice: number;
-		salePrice: number;
-		discountRate: number;
-		status: ProductStatus;
-	};
 	store: {
 		id: number;
 		name: string;
@@ -285,4 +295,13 @@ export interface HoldDetail {
 		businessOpenTime: string;
 		businessCloseTime: string;
 	};
+	items: HoldItem[];
+}
+
+export interface ActiveHoldResponse {
+	hold: HoldDetail | null;
+	/** 남은 취소 가능 횟수. 취소·노쇼로 깎이고 하루에 하나씩 최대치까지 찬다. */
+	cancelsLeft: number;
+	/** 다음 1회가 충전되는 시각. 가득 차 있으면 null. */
+	nextCancelCreditAt: string | null;
 }

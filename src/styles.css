@@ -1019,3 +1019,25 @@ img {
 	border-color: var(--danger);
 	color: var(--danger);
 }
+
+.credits {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+}
+
+.credits__dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 999px;
+	background: var(--border);
+}
+
+.credits__dot--left {
+	background: var(--accent);
+}
+
+.credits strong {
+	margin-left: 4px;
+}
