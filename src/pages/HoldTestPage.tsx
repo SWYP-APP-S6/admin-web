@@ -2,16 +2,44 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchNearbyProducts } from "../api/browse";
 import { ApiError } from "../api/client";
 import { issueTestToken } from "../api/devToken";
-import { addToHold, cancelHold, fetchActiveHold, fetchProductDetail } from "../api/holds";
+import {
+	addToHold,
+	cancelHold,
+	fetchActiveHold,
+	fetchHoldHistory,
+	fetchProductDetail,
+} from "../api/holds";
 import { clearConsumerToken, getConsumerToken, storeConsumerToken } from "../auth/consumerToken";
 import { useAsync } from "../hooks/useAsync";
-import type { HoldButtonState, HoldDetail, ProductBrowseDetail } from "../types";
+import type {
+	HoldButtonState,
+	HoldDetail,
+	HoldHistory,
+	HoldStatus,
+	ProductBrowseDetail,
+} from "../types";
 
 // 서버 정책(hold.user-qty-limit)과 같은 값. 상품 하나당 상한이고, 더 담기로 우회되지 않는다.
 const MAX_QTY_PER_PRODUCT = 3;
 
 // 서버 정책(hold.cancel-credit-max)과 같은 값. 점 개수를 그리는 데만 쓴다.
 const MAX_CANCEL_CREDITS = 3;
+
+const HISTORY_PAGE_SIZE = 10;
+
+const HISTORY_STATUS_LABEL: Record<HoldStatus, string> = {
+	HOLDING: "진행 중",
+	COMPLETED: "수령 완료",
+	CANCELED: "취소",
+	EXPIRED: "만료",
+};
+
+const HISTORY_STATUS_TAG: Record<HoldStatus, string> = {
+	HOLDING: "tag tag--pending",
+	COMPLETED: "tag tag--completed",
+	CANCELED: "tag tag--rejected",
+	EXPIRED: "tag tag--expired",
+};
 
 const PRESETS = [
 	{ label: "매장 3곳", lat: 37.5069, lng: 127.0365 },
@@ -38,6 +66,16 @@ function clockLabel(ms: number): string {
 
 function timeLabel(isoLocalDateTime: string): string {
 	return isoLocalDateTime.slice(11, 16);
+}
+
+// heldAt 은 LocalDateTime 이 아니라 Instant 라 문자열을 자르면 UTC 가 나온다 -- 브라우저 시간대로 옮긴다.
+function momentLabel(instant: string): string {
+	return new Date(instant).toLocaleString("ko-KR", {
+		month: "numeric",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 }
 
 function asError(caught: unknown): Error {
@@ -92,6 +130,94 @@ function ErrorView({ error }: { error: Error }) {
 	);
 }
 
+/**
+ * GET /holds. 진행 중인 찜은 계정당 하나뿐이라 상태 필터 없이 최신순으로만 내려온다 --
+ * 목록의 status 도 지연 만료로 판정되므로 배치 전 만료 건이 EXPIRED 로 보인다.
+ */
+function HoldHistoryPanel({ token, reloadKey }: { token: string; reloadKey: number }) {
+	const [page, setPage] = useState(0);
+	const [state, setState] = useState<{
+		loading: boolean;
+		data: HoldHistory | null;
+		error: Error | null;
+	}>({ loading: true, data: null, error: null });
+
+	useEffect(() => {
+		let cancelled = false;
+		setState((current) => ({ ...current, loading: true }));
+		fetchHoldHistory({ page, size: HISTORY_PAGE_SIZE }, token)
+			.then((data) => {
+				if (!cancelled) {
+					setState({ loading: false, data, error: null });
+				}
+			})
+			.catch((caught) => {
+				if (!cancelled) {
+					setState({ loading: false, data: null, error: asError(caught) });
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [token, page, reloadKey]);
+
+	if (state.loading && !state.data) {
+		return <div className="state">불러오는 중…</div>;
+	}
+	if (state.error) {
+		return <ErrorView error={state.error} />;
+	}
+	if (!state.data || state.data.holds.content.length === 0) {
+		return <div className="state">아직 찜한 내역이 없습니다.</div>;
+	}
+
+	const { holds } = state.data;
+	return (
+		<>
+			<div className="history">
+				{holds.content.map((entry) => (
+					<div className="history__item" key={entry.id}>
+						<div className="history__head">
+							<span>{entry.storeName}</span>
+							<span className={HISTORY_STATUS_TAG[entry.status]}>
+								{HISTORY_STATUS_LABEL[entry.status]}
+							</span>
+						</div>
+						<div className="table__muted">
+							{entry.items.map((item) => `${item.name} ${item.qty}개`).join(" · ")}
+						</div>
+						<div className="history__meta">
+							찜 #{entry.id} · {entry.totalQty}개 · {won(entry.totalPrice)} ·{" "}
+							{momentLabel(entry.heldAt)}
+						</div>
+					</div>
+				))}
+			</div>
+			<div className="row-actions">
+				<button
+					className="button button--small"
+					type="button"
+					disabled={page === 0}
+					onClick={() => setPage((current) => current - 1)}
+				>
+					이전
+				</button>
+				<span className="page-count">
+					{holds.totalElements}건 · {page + 1}/{holds.totalPages}
+				</span>
+				<button
+					className="button button--small"
+					type="button"
+					disabled={holds.last}
+					onClick={() => setPage((current) => current + 1)}
+				>
+					다음
+				</button>
+			</div>
+		</>
+	);
+}
+
 export function HoldTestPage() {
 	const [token, setToken] = useState<string | null>(() => getConsumerToken());
 	const [identity, setIdentity] = useState<{ userId: number; nickname: string } | null>(null);
@@ -112,6 +238,7 @@ export function HoldTestPage() {
 	const [tick, setTick] = useState(() => Date.now());
 	const [productsReload, setProductsReload] = useState(0);
 	const [credits, setCredits] = useState<{ left: number; nextAt: string | null } | null>(null);
+	const [sideTab, setSideTab] = useState<"picker" | "history">("picker");
 
 	const { lat, lng } = position;
 
@@ -396,6 +523,12 @@ export function HoldTestPage() {
 								<strong>{activeHold.store.name}</strong>
 								찜 #{activeHold.id} · {activeHold.totalQty}개 · {won(activeHold.totalPrice)}
 							</div>
+							<div className="phone__row">
+								<strong>가게</strong>
+								{activeHold.store.businessOpenTime.slice(0, 5)} ~{" "}
+								{activeHold.store.businessCloseTime.slice(0, 5)}
+								{activeHold.store.openNow ? " · 영업 중" : " · 영업 종료"}
+							</div>
 							{activeHold.items.map((item) => (
 								<button
 									key={item.productId}
@@ -424,7 +557,30 @@ export function HoldTestPage() {
 					)}
 
 					<section className="panel">
-						<h2 className="panel__title">상품 선택</h2>
+						<div className="tabs">
+							<button
+								type="button"
+								className={sideTab === "picker" ? "tabs__tab tabs__tab--active" : "tabs__tab"}
+								onClick={() => setSideTab("picker")}
+							>
+								상품 선택
+							</button>
+							<button
+								type="button"
+								className={sideTab === "history" ? "tabs__tab tabs__tab--active" : "tabs__tab"}
+								onClick={() => setSideTab("history")}
+							>
+								찜 내역 · GET /holds
+							</button>
+						</div>
+						{sideTab === "history" && token && (
+							<HoldHistoryPanel token={token} reloadKey={productsReload} />
+						)}
+						{sideTab === "history" && !token && (
+							<div className="state">토큰을 발급하면 내역을 불러옵니다.</div>
+						)}
+						{sideTab === "picker" && (
+						<>
 						{nearby.loading && <div className="state">불러오는 중…</div>}
 						{nearby.error && <ErrorView error={nearby.error} />}
 						{!nearby.loading && !nearby.error && productCount === 0 && (
@@ -464,6 +620,8 @@ export function HoldTestPage() {
 								</div>
 							))}
 						</div>
+						</>
+						)}
 					</section>
 				</div>
 
