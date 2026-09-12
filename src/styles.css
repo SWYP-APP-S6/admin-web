@@ -1171,3 +1171,389 @@ img {
 	color: var(--text);
 	font-weight: 600;
 }
+
+/* ============================================================
+   소비자 앱 시뮬레이터 (/app)
+   실제 앱 화면을 한 흐름으로 재현한다 — 로그인부터 홈·상세·찜·내역·알림·마이까지.
+   ============================================================ */
+
+.app-frame {
+	width: 100%;
+	max-width: 420px;
+	margin: 0 auto;
+	height: calc(100vh - 40px);
+	display: flex;
+	flex-direction: column;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	overflow: hidden;
+}
+
+.app-bar {
+	display: grid;
+	grid-template-columns: 40px 1fr auto;
+	align-items: center;
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.app-bar__back {
+	background: none;
+	border: none;
+	font-size: 18px;
+	color: var(--text);
+	cursor: pointer;
+	text-align: left;
+	padding: 0;
+}
+
+.app-bar__title {
+	font-weight: 700;
+	font-size: 15px;
+	text-align: center;
+}
+
+.app-bar__realm {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.app-body {
+	flex: 1;
+	overflow-y: auto;
+}
+
+.app-screen {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 14px;
+}
+
+/* 상품 상세는 히어로 이미지가 화면 끝까지 닿아야 앱처럼 보인다. */
+.app-screen--flush {
+	padding: 0;
+	gap: 0;
+}
+
+.app-screen--center {
+	justify-content: center;
+	min-height: 100%;
+	gap: 10px;
+	padding: 24px;
+}
+
+.app-brand {
+	font-size: 26px;
+	font-weight: 800;
+	color: var(--accent);
+	text-align: center;
+}
+
+.app-title {
+	font-size: 18px;
+	font-weight: 700;
+	margin: 0;
+}
+
+.app-sub {
+	font-size: 13px;
+	color: var(--text-muted);
+	margin: 0 0 8px;
+	text-align: center;
+	line-height: 1.5;
+}
+
+.app-hint {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.app-divider {
+	margin-top: 10px;
+	font-size: 12px;
+	color: var(--text-muted);
+	text-align: center;
+}
+
+.app-cta--kakao {
+	background: #fee500;
+	color: #191600;
+	border-color: #fee500;
+}
+
+.app-terms {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 8px 0;
+}
+
+.app-place {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.app-place__select {
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 6px 8px;
+	font: inherit;
+	font-size: 13px;
+	background: var(--surface);
+	color: var(--text);
+}
+
+.app-toggle {
+	display: flex;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.app-toggle__tab {
+	border: none;
+	background: var(--surface);
+	padding: 5px 14px;
+	font-size: 13px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.app-toggle__tab--on {
+	background: var(--accent);
+	color: #fff;
+	font-weight: 600;
+}
+
+.app-count {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.app-store {
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.app-store__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 12px;
+	background: var(--bg);
+	font-size: 13px;
+}
+
+.app-store__head span {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.app-item {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	padding: 10px 12px;
+	/* button 의 기본 테두리를 지우고 구분선만 남긴다. border-top 만 덮으면 나머지 세 면에
+	   UA 기본 outset 테두리가 남아 목록이 상자처럼 보인다. */
+	border: none;
+	border-top: 1px solid var(--border);
+	background: var(--surface);
+	text-align: left;
+	font: inherit;
+	color: var(--text);
+	width: 100%;
+}
+
+button.app-item {
+	cursor: pointer;
+}
+
+button.app-item:hover {
+	background: var(--bg);
+}
+
+.app-item__thumb {
+	width: 52px;
+	height: 52px;
+	border-radius: 8px;
+	object-fit: cover;
+	flex: 0 0 52px;
+	background: var(--bg);
+}
+
+.app-item__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.app-item__name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.app-item__price {
+	font-size: 13px;
+}
+
+.app-item__price b {
+	color: #d9480f;
+}
+
+.app-item__price s {
+	color: var(--text-muted);
+}
+
+.app-item__meta {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.app-pins {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.app-pin {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.app-pin__badge {
+	width: 28px;
+	height: 28px;
+	border-radius: 999px;
+	background: var(--accent);
+	color: #fff;
+	font-size: 13px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 28px;
+}
+
+.app-pin__body {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.app-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 14px 14px 0;
+	padding: 10px 12px;
+	border: 1px solid var(--accent);
+	border-radius: var(--radius);
+	background: var(--bg);
+	font: inherit;
+	font-size: 13px;
+	color: var(--text);
+	cursor: pointer;
+}
+
+.app-banner__clock {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: #b7791f;
+}
+
+.app-history {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	text-align: left;
+	font: inherit;
+	color: var(--text);
+	cursor: pointer;
+}
+
+.app-history:hover {
+	border-color: var(--accent);
+}
+
+.app-history__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 14px;
+}
+
+.app-profile {
+	padding: 4px 0 8px;
+}
+
+.app-profile__name {
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.app-login-gate {
+	padding: 40px 20px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	font-size: 13px;
+	color: var(--text-muted);
+	line-height: 1.6;
+}
+
+.app-tabs {
+	display: flex;
+	border-top: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.app-tabs__tab {
+	flex: 1;
+	position: relative;
+	border: none;
+	background: none;
+	padding: 12px 0;
+	font-size: 13px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.app-tabs__tab--on {
+	color: var(--accent);
+	font-weight: 700;
+}
+
+.app-tabs__dot {
+	position: absolute;
+	top: 8px;
+	margin-left: 3px;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: #d9480f;
+}
