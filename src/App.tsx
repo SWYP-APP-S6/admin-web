@@ -2,10 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
-import { AccountTestPage } from "./pages/AccountTestPage";
-import { BrowseTestPage } from "./pages/BrowseTestPage";
-import { HoldTestPage } from "./pages/HoldTestPage";
-import { KakaoTestPage } from "./pages/KakaoTestPage";
+import { ConsumerAppPage } from "./pages/ConsumerAppPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
@@ -47,10 +44,7 @@ export default function App() {
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
-						<Route path="/browse-test" element={<BrowseTestPage />} />
-						<Route path="/hold-test" element={<HoldTestPage />} />
-						<Route path="/account-test" element={<AccountTestPage />} />
-						<Route path="/kakao-test" element={<KakaoTestPage />} />
+						<Route path="/app" element={<ConsumerAppPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
 					<Route path="*" element={<Navigate to="/recipes" replace />} />
