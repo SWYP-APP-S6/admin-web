@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchNearbyProducts, fetchNearbyStores } from "../api/browse";
+import { fetchMyLocation, setMyLocation } from "../api/myLocation";
 import { useAsync } from "../hooks/useAsync";
 import type { NearbyProductSort, ProductCategory } from "../types";
 import { ErrorNote, Loading, deadlineLabel, won } from "./shared";
@@ -13,12 +14,16 @@ const CATEGORIES: { value: "" | ProductCategory; label: string }[] = [
 	{ value: "FRUIT", label: "과일" },
 	{ value: "MEAT", label: "육류" },
 	{ value: "SEAFOOD", label: "수산" },
+	{ value: "DAIRY_EGG", label: "유제품" },
+	{ value: "BAKERY", label: "베이커리" },
 	{ value: "SIDE_DISH", label: "반찬" },
+	{ value: "ETC", label: "기타" },
 ];
 
 const SORTS: { value: NearbyProductSort; label: string }[] = [
 	{ value: "DISTANCE", label: "거리순" },
 	{ value: "PICKUP_DEADLINE", label: "마감임박순" },
+	{ value: "DISCOUNT_RATE", label: "할인율순" },
 ];
 
 export interface Position {
@@ -55,9 +60,38 @@ interface Props {
 
 export function HomeScreen({ position, accessToken, onChangePosition, onOpenProduct }: Props) {
 	const [view, setView] = useState<"list" | "map">("list");
+	const [regionName, setRegionName] = useState<string | null>(null);
 	const [radiusMeters, setRadiusMeters] = useState(1000);
 	const [category, setCategory] = useState<"" | ProductCategory>("");
 	const [sort, setSort] = useState<NearbyProductSort>("DISTANCE");
+
+	// 헤더에 찍히는 동네 이름. 비회원은 저장할 곳이 없어 403 이 오므로 조용히 넘긴다.
+	useEffect(() => {
+		let active = true;
+		fetchMyLocation(accessToken)
+			.then((mine) => {
+				if (active) {
+					setRegionName(mine.location?.regionName ?? null);
+				}
+			})
+			.catch(() => undefined);
+		return () => {
+			active = false;
+		};
+	}, [accessToken]);
+
+	const moveTo = useCallback(
+		(next: Position) => {
+			onChangePosition(next);
+			setMyLocation(
+				{ regionName: next.label, latitude: next.lat, longitude: next.lng },
+				accessToken,
+			)
+				.then((mine) => setRegionName(mine.location?.regionName ?? null))
+				.catch(() => undefined);
+		},
+		[accessToken, onChangePosition],
+	);
 
 	// 탐색도 소비자·비회원 토큰으로 부른다. 토큰을 안 넘기면 관리자 토큰이 대신 쓰여, 앱에는
 	// 없는 권한으로 조회하게 되고 소비자 토큰이 만료돼도 홈만 멀쩡해 보인다.
@@ -86,13 +120,12 @@ export function HomeScreen({ position, accessToken, onChangePosition, onOpenProd
 	return (
 		<div className="app-screen">
 			<div className="app-place">
+				<span className="app-place__region">📍 {regionName ?? position.label}</span>
 				<select
 					className="app-place__select"
 					value={position.label}
 					onChange={(event) =>
-						onChangePosition(
-							POSITIONS.find((item) => item.label === event.target.value) ?? POSITIONS[0],
-						)
+						moveTo(POSITIONS.find((item) => item.label === event.target.value) ?? POSITIONS[0])
 					}
 				>
 					{POSITIONS.map((item) => (

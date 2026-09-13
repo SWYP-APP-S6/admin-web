@@ -45,7 +45,7 @@ export const SCREENS: ScreenSpec[] = [
 		id: "C-010",
 		name: "홈 · 지도",
 		frame: "홈 지도 & 목록",
-		apis: ["GET /stores/nearby", "GET /holds/active"],
+		apis: ["GET /stores/nearby", "GET /holds/active", "GET/PUT /users/me/location"],
 		probe: "nearbyStores",
 		fields: [
 			{ label: "매장 수", path: "totalStoreCount" },
@@ -54,12 +54,11 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "좌표", path: "stores[0].latitude" },
 			{ label: "판매중 개수 배지", path: "stores[0].sellableProductCount" },
 		],
-		gaps: [
-			"헤더의 지역명(`망원동`) -- user_locations 를 읽고 쓰는 API 가 없다",
-			"판매중 0개 매장의 회색 `0` 마커 -- 지금은 0개 매장을 응답에서 아예 뺀다",
-		],
+
 		notes: [
 			"위치 권한을 거부하면 S-001 이 권한 안내만 띄우고 조회하지 않는다 -- 기본 동네로 대신 조회하는 경로는 없다(2026-09-13 확정)",
+			"헤더의 동네 이름은 /users/me/location 이 오간다. 좌표 → 행정동 변환은 앱이 하고 서버는 이름을 받아 둔다",
+			"판매중 0개 매장은 응답에서 빼는 것이 맞다(2026-09-13 확정) -- 피그마의 회색 `0` 마커는 넣지 않는다",
 		],
 	},
 	{
@@ -94,11 +93,11 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "남은 수량", path: "stores.content[0].products[0].availableQty" },
 			{ label: "상품 마감", path: "stores.content[0].products[0].pickupEndAt" },
 		],
-		gaps: [
-			"상품 카드의 `과채류` 배지 -- products.category 는 6종(VEGETABLE/FRUIT/…)뿐이고 소분류가 없다",
-			"지도에서 누른 상점을 목록 맨 위로 올리는 정렬",
-			"`할인율순` -- 화면은 정렬 탭이 셋(거리순·마감임박순·할인율순)인데 서버는 앞의 둘만 받는다",
-			"카테고리 칩의 `유제품` -- products.category 6종에 유제품이 없다(가게 종류에만 DAIRY_EGG 가 있다)",
+		notes: [
+			"상품 카드의 `과채류` 배지는 앱이 만든다(2026-09-13 확정) -- 소분류를 서버가 들지 않는다",
+			"지도에서 누른 상점을 맨 위로 올리는 것도 앱이 한다. 매장이 한 페이지(20곳)를 넘기 시작하면 그때는 서버가 기준 매장을 받아야 한다 -- 다른 페이지에 있는 매장은 앱이 끌어올릴 수 없다",
+			"정렬은 셋 다 받는다(거리순·마감임박순·할인율순). 할인율순은 그 매장의 최대 할인으로 매장을 줄 세우고, 카드 안 상품도 같은 기준으로 정렬한다",
+			"카테고리는 칩과 같은 여덟이다(V0022) -- 채소·과일·육류·수산·유제품·베이커리·반찬·기타",
 		],
 	},
 	{
@@ -123,8 +122,7 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "레시피 조리시간", path: "recipes[0].cookTimeMinutes", optional: true },
 		],
 		gaps: [
-			"추천 레시피의 `난이도 하/중` -- recipes 에 난이도 컬럼이 없다",
-			"`20분 소요` -- cook_time_minutes 컬럼은 있으나 1,156건 전부 비어 있다",
+			"추천 레시피의 `난이도 하/중` · `20분 소요` -- 난이도는 컬럼이 없고 조리시간은 컬럼만 있다. 식약처 원본에 없는 값이라 AI 백필로 채운다(별도 PR)",
 		],
 		notes: [
 			"해시태그(`#꿀복` `#달콤`)는 지금 재료명이 올라간다. 마케팅 태그가 따로면 별도 저장이 필요하다",
@@ -165,8 +163,9 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "취소 주체", path: "canceledBy", optional: true },
 			{ label: "취소 사유", path: "cancelReason", optional: true },
 		],
-		gaps: ["매장 정보 카드의 매장 사진 -- stores 에 사진 컬럼이 없다(지도 썸네일이면 서버 변경 없음)"],
+
 		notes: [
+			"매장 정보 카드의 이미지는 좌표로 그리는 지도 썸네일이다(2026-09-13 확정) -- 핀과 길찾기가 함께 있는 그림이고, 서버가 사진을 들지 않는다",
 			"만료 뒤 `다시 찜하기`는 열려 있다. 배치 전이라도 지연 만료로 EXPIRED 를 내리고 재찜을 받는다",
 			"피그마의 `취소로 끝난 건 다시 찜하기 불가`는 초기 정책이다 -- 지금은 상품 단위 차단 대신 계정당 취소권(최대 3, 하루 1개 충전)으로 간다",
 		],
@@ -219,8 +218,11 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "구매 수량", path: "items[0].qty" },
 			{ label: "가격", path: "totalPrice" },
 		],
-		gaps: ["이 화면의 추천 레시피 -- 찜 응답에는 레시피가 없어 앱이 상품 상세를 한 번 더 불러야 한다"],
-		notes: ["점주가 O-040 에서 수령 완료를 누르면 이 응답이 COMPLETED 로 바뀐다"],
+		notes: [
+			"추천 레시피는 앱이 items[].productId 로 상품 상세를 한 번 더 불러 채운다(2026-09-13 확정) -- 수령 직후 한 번 뜨는 화면이라 요청 하나를 더 쓰는 편이 찜 응답에 레시피를 얹는 것보다 낫다",
+			"점주가 O-040 에서 수령 완료를 누르면 이 응답이 COMPLETED 로 바뀐다",
+			"C-031 과 같은 응답이라 필드는 그 카드에서 확인된다. 여기서 더 보는 것은 completedAt 하나이고, 그건 백엔드 테스트(completePickup_completesTheHold_…)가 지킨다",
+		],
 	},
 	{
 		id: "C-041",
@@ -241,8 +243,7 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "나트륨", path: "nutrition.sodiumMg", optional: true },
 		],
 		gaps: [
-			"`난이도 하` 배지 -- recipes 에 난이도 컬럼이 없다",
-			"`20분 소요` -- 컬럼은 있으나 값이 비어 있다(1,156건 전부)",
+			"`난이도 하` 배지 · `20분 소요` -- C-020 과 같은 항목이다. AI 백필로 채운다(별도 PR)",
 		],
 	},
 ];

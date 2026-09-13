@@ -146,10 +146,12 @@ export type ProductCategory =
 	| "FRUIT"
 	| "MEAT"
 	| "SEAFOOD"
+	| "DAIRY_EGG"
+	| "BAKERY"
 	| "SIDE_DISH"
 	| "ETC";
 
-export type NearbyProductSort = "DISTANCE" | "PICKUP_DEADLINE";
+export type NearbyProductSort = "DISTANCE" | "PICKUP_DEADLINE" | "DISCOUNT_RATE";
 
 export interface NearbyProduct {
 	id: number;
@@ -379,4 +381,14 @@ export interface Me {
 	marketingOptIn: boolean;
 	termsAgreedAt: string;
 	joinedAt: string;
+}
+
+/** 기본 동네. 한 번도 정한 적이 없으면 location 이 null 이다(404 가 아니다). */
+export interface MyLocation {
+	location: {
+		regionName: string;
+		latitude: number;
+		longitude: number;
+		updatedAt: string;
+	} | null;
 }
