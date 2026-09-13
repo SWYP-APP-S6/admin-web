@@ -114,7 +114,6 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "판매중 · 방문 예정 수량", path: "products[0].activeHoldQty" },
 		],
 		missing: [
-			"상단 `새로운 찜이 생겼어요` 배너 — NEW_HOLD_RECEIVED 는 enum 값만 있고 알림 행을 만드는 곳이 없다(찜 생성 시 점주에게 알림이 가지 않는다)",
 			"`N명은 제품 구매가 불가능해요` — 남은 수량보다 찜이 많을 때 그 **인원 수**를 서버가 세지 않는다(수량 차이는 activeHoldQty − availableQty 로 앱이 낼 수 있지만 사람 수는 아니다)",
 		],
 		gaps: [
@@ -123,6 +122,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		notes: [
 			"화면 셋(최초접근 · 디폴트 · 리스트)은 hasRegisteredProduct 와 products 의 길이로 갈린다",
 			"products 는 **지금 판매중인 것만** 온다(findSellingNowOfStore) — 마감·품절 상품은 빠진다",
+			"상단 `새로운 찜이 생겼어요` 배너의 재료는 있다 — HoldService 가 NEW_HOLD_RECEIVED 알림 행을 만든다(#48). 다만 **새 픽업이 열릴 때만** 보내므로 같은 손님이 이어 담은 건에는 알림이 없다",
 		],
 	},
 
@@ -330,10 +330,10 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "본문", path: "notifications.content[0].body" },
 			{ label: "받은 시각", path: "notifications.content[0].notifiedAt" },
 		],
-		missing: [
-			"점주 앞으로 가는 알림을 **만드는 곳이 없다** — 소비자 찜이 생겨도 NEW_HOLD_RECEIVED 행이 쌓이지 않아 이 목록은 점주에게 늘 비어 있다",
+		notes: [
+			"알림함 엔드포인트 자체는 소비자·점주 공용이다(REALM_USER 면 열린다)",
+			"점주 앞으로 가는 알림은 NEW_HOLD_RECEIVED 하나다 — 재고 재확인(STOCK_RECONFIRM_REQUEST)은 아직 아무도 만들지 않는다",
 		],
-		notes: ["알림함 엔드포인트 자체는 소비자·점주 공용이다(REALM_USER 면 열린다)"],
 	},
 	{
 		id: "O-0NN",
