@@ -586,6 +586,11 @@ export interface OwnerHoldDetail {
 
 export type DevicePlatform = "ANDROID" | "IOS";
 
+/** 업로드가 돌려주는 것. 이 URL 만 상품 사진으로 등록할 수 있다. */
+export interface ProductPhoto {
+	photoUrl: string;
+}
+
 /** O-021. 등록 전에 서버가 같은 규칙(할인율 · 픽업 창)으로 계산해 돌려주는 미리보기. 저장하지 않는다. */
 export interface ProductPreview {
 	name: string;

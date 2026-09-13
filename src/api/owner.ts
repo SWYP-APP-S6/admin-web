@@ -5,6 +5,7 @@ import type {
 	OwnerHoldStatus,
 	OwnerHome,
 	OwnerProductDetail,
+	ProductPhoto,
 	ProductPreview,
 	ProductRegisterPayload,
 	StoreDetail,
@@ -38,6 +39,20 @@ export function registerProduct(
 	return request<OwnerProductDetail>("/owner/products", {
 		method: "POST",
 		body: payload,
+		accessToken,
+	});
+}
+
+/**
+ * O-020 Step1. 파일을 먼저 올리고 돌아온 URL 을 등록·미리보기에 그대로 넘긴다 — 서버는 **자기가
+ * 저장한 URL 만** 상품 사진으로 받는다(그 밖은 INVALID_PHOTO_URL). 상한은 10MB.
+ */
+export function uploadProductPhoto(file: File, accessToken: string): Promise<ProductPhoto> {
+	const form = new FormData();
+	form.append("file", file);
+	return request<ProductPhoto>("/owner/products/photos", {
+		method: "POST",
+		body: form,
 		accessToken,
 	});
 }

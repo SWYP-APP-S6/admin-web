@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { previewProduct, registerProduct } from "../api/owner";
+import { previewProduct, registerProduct, uploadProductPhoto } from "../api/owner";
 import { ErrorNote, asError, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
 import type {
@@ -8,12 +8,6 @@ import type {
 	ProductPreview,
 	ProductRegisterPayload,
 } from "../types";
-
-// 사진 업로드 엔드포인트가 아직 없어 서버가 받는 것은 URL 문자열 하나뿐이다. 시드가 쓰는 것과
-// 같은 자리표시자를 눌러 넣을 수 있게 해 둔다 -- 손으로 URL 을 만들어 넣는 수고를 없앤다.
-const SAMPLE_PHOTOS = ["peach", "spinach", "zucchini", "sprout", "apple"].map(
-	(seed) => `https://picsum.photos/seed/${seed}/400/300`,
-);
 
 function discountRateOf(originalPrice: number, salePrice: number): number {
 	if (originalPrice <= 0 || salePrice <= 0 || salePrice >= originalPrice) {
@@ -43,7 +37,8 @@ export function ProductRegisterScreen({
 }: Props) {
 	const [step, setStep] = useState<1 | 2 | 3>(1);
 	const [preview, setPreview] = useState<ProductPreview | null>(null);
-	const [photoUrl, setPhotoUrl] = useState(SAMPLE_PHOTOS[0]);
+	const [photoUrl, setPhotoUrl] = useState("");
+	const [uploading, setUploading] = useState(false);
 	const [name, setName] = useState("");
 	const [category, setCategory] = useState<ProductCategory>("ETC");
 	const [qty, setQty] = useState(1);
@@ -58,7 +53,21 @@ export function ProductRegisterScreen({
 	const sale = Number(salePrice) || 0;
 	const rate = discountRateOf(original, sale);
 
-	const step1Ready = photoUrl.trim() !== "" && name.trim() !== "";
+	const step1Ready = photoUrl !== "" && name.trim() !== "";
+
+	// 서버는 자기가 저장한 URL 만 받는다. 파일을 고르는 즉시 올리고 돌아온 주소를 들고 간다.
+	async function upload(file: File) {
+		setUploading(true);
+		setError(null);
+		try {
+			setPhotoUrl((await uploadProductPhoto(file, accessToken)).photoUrl);
+		} catch (caught) {
+			setError(asError(caught));
+			setPhotoUrl("");
+		} finally {
+			setUploading(false);
+		}
+	}
 	const step2Ready = qty >= 1 && original > 0 && sale > 0 && sale < original;
 
 	const ingredientTags = tags
@@ -167,29 +176,32 @@ export function ProductRegisterScreen({
 				</h2>
 
 				<div className="field">
-					<span className="field__label">사진 *</span>
+					<span className="field__label">사진 * (1장)</span>
 					<span className="field__hint">
-						업로드 API 가 아직 없어 <code>photoUrl</code> 문자열 하나를 그대로 저장합니다.
-						상품당 1장으로 확정돼 있어 여러 장은 받지 않습니다.
+						jpg · png, 10MB 까지. 고르면 바로 올라가고, 서버는 <strong>여기서 올린 사진만</strong>{" "}
+						상품에 붙일 수 있습니다.
 					</span>
 					<input
 						className="field__input"
-						value={photoUrl}
-						maxLength={512}
-						onChange={(event) => setPhotoUrl(event.target.value)}
+						type="file"
+						accept="image/png,image/jpeg"
+						disabled={uploading}
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							if (file) {
+								void upload(file);
+							}
+						}}
 					/>
-					<div className="owner-photos">
-						{SAMPLE_PHOTOS.map((url) => (
-							<button
-								key={url}
-								type="button"
-								className={url === photoUrl ? "owner-photo owner-photo--on" : "owner-photo"}
-								onClick={() => setPhotoUrl(url)}
-							>
-								<img src={url} alt="" />
-							</button>
-						))}
-					</div>
+					{uploading && <p className="state">올리는 중…</p>}
+					{photoUrl !== "" && (
+						<div className="owner-photos">
+							<span className="owner-photo owner-photo--on">
+								<img src={photoUrl} alt="" />
+							</span>
+						</div>
+					)}
+					{photoUrl !== "" && <span className="field__hint"><code>{photoUrl}</code></span>}
 				</div>
 
 				<label className="field">
@@ -221,7 +233,14 @@ export function ProductRegisterScreen({
 					</div>
 				</div>
 
-				<button className="phone__cta" type="button" disabled={!step1Ready} onClick={() => setStep(2)}>
+				{error && <ErrorNote error={error} />}
+
+				<button
+					className="phone__cta"
+					type="button"
+					disabled={!step1Ready || uploading}
+					onClick={() => setStep(2)}
+				>
 					다음
 				</button>
 				<button className="phone__cta phone__cta--ghost" type="button" onClick={onCancel}>
