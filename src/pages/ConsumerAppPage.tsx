@@ -6,13 +6,13 @@ import { HistoryScreen } from "../consumer/HistoryScreen";
 import { HoldScreen } from "../consumer/HoldScreen";
 import { HomeScreen, POSITIONS } from "../consumer/HomeScreen";
 import type { Position } from "../consumer/HomeScreen";
-import { InboxScreen } from "../consumer/InboxScreen";
+import { InboxScreen } from "../app/InboxScreen";
 import { LoginScreen } from "../consumer/LoginScreen";
 import { MyScreen } from "../consumer/MyScreen";
 import { ProductScreen } from "../consumer/ProductScreen";
 import { installId, loadSession, saveSession } from "../consumer/session";
 import type { Session } from "../consumer/session";
-import { clockLabel, won } from "../consumer/shared";
+import { clockLabel, won } from "../app/shared";
 import type { ActiveHoldResponse } from "../types";
 
 type Tab = "home" | "history" | "inbox" | "my";

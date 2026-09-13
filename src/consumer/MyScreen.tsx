@@ -1,7 +1,7 @@
 import { fetchActiveHold } from "../api/holds";
 import { fetchMe } from "../api/me";
 import { useAsync } from "../hooks/useAsync";
-import { ErrorNote, Loading, momentLabel } from "./shared";
+import { ErrorNote, Loading, momentLabel } from "../app/shared";
 import { ROLE_LABEL } from "./session";
 
 /** 서버 정책(hold.cancel-credit-max)과 같은 값. 점 개수를 그리는 데만 쓴다. */
