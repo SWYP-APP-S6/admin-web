@@ -48,33 +48,39 @@ function bounds(position: Position, meters: number) {
 
 interface Props {
 	position: Position;
+	accessToken: string;
 	onChangePosition: (position: Position) => void;
 	onOpenProduct: (productId: number) => void;
 }
 
-export function HomeScreen({ position, onChangePosition, onOpenProduct }: Props) {
+export function HomeScreen({ position, accessToken, onChangePosition, onOpenProduct }: Props) {
 	const [view, setView] = useState<"list" | "map">("list");
 	const [radiusMeters, setRadiusMeters] = useState(1000);
 	const [category, setCategory] = useState<"" | ProductCategory>("");
 	const [sort, setSort] = useState<NearbyProductSort>("DISTANCE");
 
+	// 탐색도 소비자·비회원 토큰으로 부른다. 토큰을 안 넘기면 관리자 토큰이 대신 쓰여, 앱에는
+	// 없는 권한으로 조회하게 되고 소비자 토큰이 만료돼도 홈만 멀쩡해 보인다.
 	const products = useAsync(
 		() =>
-			fetchNearbyProducts({
-				lat: position.lat,
-				lng: position.lng,
-				category: category || undefined,
-				sort,
-				radiusMeters,
-				page: 0,
-				size: 20,
-			}),
-		[position.lat, position.lng, category, sort, radiusMeters],
+			fetchNearbyProducts(
+				{
+					lat: position.lat,
+					lng: position.lng,
+					category: category || undefined,
+					sort,
+					radiusMeters,
+					page: 0,
+					size: 20,
+				},
+				accessToken,
+			),
+		[position.lat, position.lng, category, sort, radiusMeters, accessToken],
 	);
 
 	const markers = useAsync(
-		() => fetchNearbyStores(bounds(position, radiusMeters)),
-		[position.lat, position.lng, radiusMeters],
+		() => fetchNearbyStores(bounds(position, radiusMeters), accessToken),
+		[position.lat, position.lng, radiusMeters, accessToken],
 	);
 
 	return (

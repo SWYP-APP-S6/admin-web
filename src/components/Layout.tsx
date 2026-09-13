@@ -6,6 +6,7 @@ const NAV_ITEMS = [
 	{ to: "/users", label: "유저" },
 	{ to: "/stores", label: "가게" },
 	{ to: "/app", label: "소비자 앱 테스트" },
+	{ to: "/flow", label: "소비자 플로우 점검" },
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {

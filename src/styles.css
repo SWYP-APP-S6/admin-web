@@ -1557,3 +1557,140 @@ button.app-item:hover {
 	border-radius: 999px;
 	background: #d9480f;
 }
+
+/* ============================================================
+   소비자 플로우 점검 (/flow)
+   ============================================================ */
+
+.flow-board {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+	gap: 12px;
+}
+
+.flow-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.flow-card__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text);
+	text-align: left;
+	cursor: pointer;
+}
+
+.flow-card__apis {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.flow-card__apis code {
+	font-size: 11px;
+	background: var(--bg);
+	border-radius: 4px;
+	padding: 2px 6px;
+	color: var(--text-muted);
+}
+
+.flow-card__skip {
+	margin: 0;
+	font-size: 12px;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.flow-fields {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 2px;
+}
+
+.flow-field {
+	display: grid;
+	grid-template-columns: 14px 1fr auto;
+	gap: 6px;
+	align-items: baseline;
+	font-size: 12px;
+}
+
+.flow-field code {
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.flow-field--present > span:first-child {
+	color: #1f6f4a;
+}
+
+/* 값이 비어 있는 것과 필드가 없는 것은 응답만으로 갈리지 않는다 -- 화면이 없어도 성립하면 회색, 아니면 빨강. */
+.flow-field--empty > span:first-child {
+	color: var(--text-muted);
+}
+
+.flow-field--absent > span:first-child {
+	color: #a02620;
+}
+
+.flow-field--absent {
+	color: #a02620;
+}
+
+.flow-gap {
+	margin: 0;
+	font-size: 12px;
+	color: #8a5a11;
+	line-height: 1.5;
+}
+
+.flow-note {
+	margin: 0;
+	font-size: 12px;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.flow-raw {
+	margin: 0;
+	max-height: 320px;
+	overflow: auto;
+	background: var(--bg);
+	border-radius: var(--radius);
+	padding: 10px;
+	font-size: 11px;
+	line-height: 1.5;
+}
+
+.flow-summary {
+	margin: 0;
+	padding-left: 18px;
+	font-size: 13px;
+	line-height: 1.8;
+	color: var(--text);
+}
+
+.flow-summary code {
+	color: var(--text-muted);
+}
+
+/* 목록이 비어 확인할 행이 없는 경우. 서버 결함과 구분한다. */
+.flow-field--norows > span:first-child {
+	color: #8a5a11;
+}

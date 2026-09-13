@@ -35,8 +35,9 @@ export function nearbyProductsPath(params: {
 
 export function fetchNearbyProducts(
 	params: Parameters<typeof nearbyProductsPath>[0],
+	accessToken?: string,
 ): Promise<NearbyProducts> {
-	return request<NearbyProducts>(nearbyProductsPath(params));
+	return request<NearbyProducts>(nearbyProductsPath(params), { accessToken });
 }
 
 export function nearbyStoresPath(bounds: {
@@ -56,8 +57,9 @@ export function nearbyStoresPath(bounds: {
 
 export function fetchNearbyStores(
 	bounds: Parameters<typeof nearbyStoresPath>[0],
+	accessToken?: string,
 ): Promise<NearbyStores> {
-	return request<NearbyStores>(nearbyStoresPath(bounds));
+	return request<NearbyStores>(nearbyStoresPath(bounds), { accessToken });
 }
 
 export function storeProductsPath(storeId: number, lat: number, lng: number): string {
