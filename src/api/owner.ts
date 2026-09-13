@@ -1,6 +1,5 @@
 import { request } from "./client";
 import type {
-	HoldDisposition,
 	OwnerHoldDetail,
 	OwnerHoldList,
 	OwnerHoldStatus,
@@ -63,18 +62,32 @@ export function fetchOwnerProduct(
 }
 
 /**
- * O-030 · O-051. 남은 수량을 0 으로 내리는데 진행 중인 찜이 있으면 서버가 disposition 을 요구한다
- * (400 DISPOSITION_REQUIRED). 화면은 그 오류를 받고 시트를 띄운 뒤 같은 요청을 다시 보낸다.
+ * O-030 · O-051. 점주가 적는 수는 **선반에 있는 총 수량**이다(찜 포함) -- 손님에게 보여줄
+ * availableQty 는 서버가 거기서 찜을 빼 만든다. 찜이 그 수를 넘으면 cancelOverflow 가 먼저
+ * 찜한 순으로 재고를 배정하고 넘치는 찜만 취소한다. false 면 수량만 저장되고 찜은 남는다.
  */
-export function updateAvailableQty(
+export function updateStock(
 	productId: number,
-	availableQty: number,
-	disposition: HoldDisposition | null,
+	stockQty: number,
+	cancelOverflow: boolean,
 	accessToken: string,
 ): Promise<OwnerProductDetail> {
-	return request<OwnerProductDetail>(`/owner/products/${productId}/available-qty`, {
+	return request<OwnerProductDetail>(`/owner/products/${productId}/stock`, {
 		method: "PATCH",
-		body: { availableQty, disposition },
+		body: { stockQty, cancelOverflow },
+		accessToken,
+	});
+}
+
+/** O-050. 「네, 맞아요」는 픽업 마감까지 수량을 잠그고, 「아니요」는 실제 재고를 적게 연다. */
+export function answerStockReconfirm(
+	productId: number,
+	confirmed: boolean,
+	accessToken: string,
+): Promise<OwnerProductDetail> {
+	return request<OwnerProductDetail>(`/owner/products/${productId}/stock-reconfirm`, {
+		method: "POST",
+		body: { confirmed },
 		accessToken,
 	});
 }

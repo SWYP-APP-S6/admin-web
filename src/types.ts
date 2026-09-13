@@ -265,6 +265,7 @@ export interface ProductBrowseDetail {
 }
 
 export interface HoldItem {
+	holdId: number;
 	productId: number;
 	name: string;
 	photoUrl: string;
@@ -278,7 +279,10 @@ export interface HoldItem {
 
 /** 찜 = 한 가게에서의 한 번의 픽업. 상품이 여러 개 담긴다. */
 export interface HoldDetail {
+	/** 이 응답이 매달린 찜. 묶음 조회에서는 묶음의 첫 찜이다. */
 	id: number;
+	/** 한 번의 방문. 같은 가게에서 이어 담은 찜들이 이 키를 공유한다. */
+	groupId: number;
 	status: HoldStatus;
 	totalQty: number;
 	totalPrice: number;
@@ -314,23 +318,19 @@ export interface ActiveHoldResponse {
 	nextCancelCreditAt: string | null;
 }
 
-export interface HoldSummaryItem {
-	productId: number;
-	name: string;
-	photoUrl: string;
-	qty: number;
-	lineTotal: number;
-}
-
-/** 찜 내역의 한 줄. 상세(HoldDetail)와 달리 가게 블록 대신 이름만 들고 온다. */
+/** 찜 내역의 한 줄. 찜 하나가 상품 하나라 항목 배열 대신 그 상품이 바로 들어 있다. */
 export interface HoldSummary {
 	id: number;
 	status: HoldStatus;
 	storeId: number;
 	storeName: string;
-	totalQty: number;
+	productId: number;
+	productName: string;
+	photoUrl: string;
+	qty: number;
 	totalPrice: number;
-	items: HoldSummaryItem[];
+	/** 이 찜이 취소권을 실제로 깎았는지. 유예 안의 취소와 잔액 0 에서의 노쇼는 false. */
+	cancelCreditUsed: boolean;
 	heldAt: string;
 	expiresAt: string;
 	completedAt: string | null;
@@ -463,11 +463,19 @@ export interface OwnerProductDetail {
 	status: ProductStatus;
 	reconfirmSentAt: string | null;
 	reconfirmAnsweredAt: string | null;
+	/** 재고 재확인 모달(O-050)을 띄워야 하는지. 보낸 뒤 아직 답하지 않은 상태. */
+	reconfirmPending: boolean;
+	/** 수량 스테퍼의 하한. 재확인 전에는 최초 등록의 일부, 그 뒤로는 0. */
+	minAdjustableQty: number;
+	/** 「네, 맞아요」로 확정한 상품은 픽업 마감까지 못 고친다. 마감된 상품도 false. */
+	stockEditable: boolean;
+	activeHoldQty: number;
+	/** 찜이 선반 수량을 넘는 만큼. 선착순 취소 대상 수량이다. */
+	shortfallQty: number;
+	/** 매장에 실제로 있는 총 수량(찜 포함). 점주가 O-030 에서 적는 값. */
+	stockQty: number;
 	createdAt: string;
 }
-
-/** 남은 수량을 0 으로 내릴 때 진행 중인 찜을 어떻게 할지. 활성 찜이 있으면 서버가 요구한다. */
-export type HoldDisposition = "KEEP_HOLDS" | "CANCEL_ALL";
 
 export interface OwnerHomeVisit {
 	holdId: number;
@@ -485,6 +493,7 @@ export interface OwnerHomeProductCard {
 	salePrice: number;
 	availableQty: number;
 	activeHoldQty: number;
+	shortfallQty: number;
 	status: ProductStatus;
 	reconfirmPending: boolean;
 }
@@ -504,6 +513,10 @@ export interface OwnerHome {
 	};
 	issues: {
 		expiredTodayCount: number;
+		/** 찜이 선반보다 많은 상품의 수. */
+		productsShortOfStock: number;
+		/** 그 상품들의 부족분 합계. */
+		shortfallQty: number;
 	};
 	unreadNotificationCount: number;
 	reconfirmPendingCount: number;
@@ -523,10 +536,12 @@ export type OwnerHoldStatus =
 
 export interface OwnerHoldSummary {
 	id: number;
+	groupId: number;
 	status: OwnerHoldStatus;
 	nickname: string;
-	totalQty: number;
-	items: { productId: number; productName: string; qty: number }[];
+	productId: number;
+	productName: string;
+	qty: number;
 	heldAt: string;
 	expiresAt: string;
 }
@@ -546,13 +561,14 @@ export interface OwnerHoldList {
 }
 
 export interface OwnerHoldDetail {
-	id: number;
+	groupId: number;
 	status: OwnerHoldStatus;
 	nickname: string;
 	storeName: string;
 	totalQty: number;
 	totalPrice: number;
 	items: {
+		holdId: number;
 		productId: number;
 		productName: string;
 		photoUrl: string;
