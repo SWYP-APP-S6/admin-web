@@ -56,8 +56,10 @@ export const SCREENS: ScreenSpec[] = [
 		],
 		gaps: [
 			"헤더의 지역명(`망원동`) -- user_locations 를 읽고 쓰는 API 가 없다",
-			"위치 권한 거부 시 기준이 될 기본 동네 -- 같은 API 가 없어서 못 채운다",
 			"판매중 0개 매장의 회색 `0` 마커 -- 지금은 0개 매장을 응답에서 아예 뺀다",
+		],
+		notes: [
+			"위치 권한을 거부하면 S-001 이 권한 안내만 띄우고 조회하지 않는다 -- 기본 동네로 대신 조회하는 경로는 없다(2026-09-13 확정)",
 		],
 	},
 	{
@@ -94,7 +96,9 @@ export const SCREENS: ScreenSpec[] = [
 		],
 		gaps: [
 			"상품 카드의 `과채류` 배지 -- products.category 는 6종(VEGETABLE/FRUIT/…)뿐이고 소분류가 없다",
-			"지도에서 누른 상점을 목록 맨 위로 올리는 정렬 -- 정렬은 거리순·마감임박순 둘뿐이다",
+			"지도에서 누른 상점을 목록 맨 위로 올리는 정렬",
+			"`할인율순` -- 화면은 정렬 탭이 셋(거리순·마감임박순·할인율순)인데 서버는 앞의 둘만 받는다",
+			"카테고리 칩의 `유제품` -- products.category 6종에 유제품이 없다(가게 종류에만 DAIRY_EGG 가 있다)",
 		],
 	},
 	{
@@ -119,12 +123,12 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "레시피 조리시간", path: "recipes[0].cookTimeMinutes", optional: true },
 		],
 		gaps: [
-			"이미지 캐러셀(`1/5`) -- products.photo_url 이 한 장이라 photoUrls 는 항상 길이 1이다",
 			"추천 레시피의 `난이도 하/중` -- recipes 에 난이도 컬럼이 없다",
 			"`20분 소요` -- cook_time_minutes 컬럼은 있으나 1,156건 전부 비어 있다",
 		],
 		notes: [
 			"해시태그(`#꿀복` `#달콤`)는 지금 재료명이 올라간다. 마케팅 태그가 따로면 별도 저장이 필요하다",
+			"사진은 상품당 1장으로 확정됐다(2026-09-13) -- photoUrls 가 길이 1인 것이 맞다",
 		],
 	},
 	{
@@ -199,7 +203,7 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "상품", path: "items[0].name" },
 			{ label: "수량", path: "items[0].qty" },
 		],
-		gaps: ["이미지 캐러셀 -- C-020 과 같은 이유(상품 사진이 한 장)"],
+		notes: ["사진은 상품당 1장으로 확정됐다(2026-09-13) -- 캐러셀은 화면에서 빠진다"],
 	},
 	{
 		id: "C-040",
