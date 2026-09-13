@@ -8,6 +8,7 @@ const NAV_ITEMS = [
 	{ to: "/app", label: "소비자 앱 테스트" },
 	{ to: "/flow", label: "소비자 플로우 점검" },
 	{ to: "/owner", label: "점주 앱 테스트" },
+	{ to: "/owner-flow", label: "점주 플로우 점검" },
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {

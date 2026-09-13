@@ -1987,3 +1987,10 @@ button.app-item:hover {
 	gap: 8px;
 	font-size: 12px;
 }
+
+.flow-missing {
+	margin: 0;
+	font-size: 12px;
+	color: var(--danger);
+	line-height: 1.5;
+}
