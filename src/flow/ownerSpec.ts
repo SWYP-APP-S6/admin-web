@@ -130,12 +130,11 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		id: "O-020-1",
 		name: "상품 등록 Step1 (사진 · 품목명)",
 		frame: "상품 등록",
-		apis: ["POST /owner/products"],
+		apis: ["POST /owner/products/photos", "POST /owner/products"],
 		probe: "none",
-		missing: [
-			"사진 업로드 엔드포인트가 없다 — 서버는 `photoUrl` 문자열 하나만 받는다(파일을 받을 곳이 없어 앱이 URL 을 만들 방법이 없다)",
-		],
 		notes: [
+			"업로드가 먼저다 — 파일을 올리면 URL 이 돌아오고, 등록·미리보기는 그 URL 을 받는다. 서버는 **자기가 저장한 URL 만** 받아들인다(그 밖은 400 INVALID_PHOTO_URL)",
+			"받는 것은 jpg · png 뿐이고, 확장자가 아니라 파일 헤더로 판별한다. 상한 10MB(초과 시 413 IMAGE_TOO_LARGE)",
 			"피그마는 최대 5장이지만 스키마는 products.photo_url 한 칸이다 — 사진 1장으로 확정(2026-09-13)",
 			"품목명은 30자 상한이다(@Size(max=30))",
 		],

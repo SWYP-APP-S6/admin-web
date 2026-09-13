@@ -111,14 +111,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 	if (accessToken) {
 		headers.Authorization = `Bearer ${accessToken}`;
 	}
-	if (body !== undefined) {
+	const form = body instanceof FormData;
+	if (body !== undefined && !form) {
 		headers["Content-Type"] = "application/json";
 	}
 
 	const response = await fetch(`${BASE_URL}${path}`, {
 		method,
 		headers,
-		body: body === undefined ? undefined : JSON.stringify(body),
+		body: body === undefined ? undefined : form ? body : JSON.stringify(body),
 	});
 
 	if (response.status === 401 && retryOnUnauthorized && getRefreshToken()) {
