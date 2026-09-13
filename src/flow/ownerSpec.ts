@@ -332,4 +332,16 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		],
 		notes: ["알림함 엔드포인트 자체는 소비자·점주 공용이다(REALM_USER 면 열린다)"],
 	},
+	{
+		id: "O-0NN",
+		name: "기기 토큰 등록 · 해제",
+		frame: "알림",
+		apis: ["POST /notifications/device-tokens", "DELETE /notifications/device-tokens"],
+		probe: "none",
+		notes: [
+			"푸시 수신처다. 앱은 로그인 직후 등록하고 **로그아웃 때 지운다** — 지우지 않으면 그 기기를 이어 쓰는 다음 사람이 남의 푸시를 받는다",
+			"발송은 알림 행을 만드는 자리가 아니라 아웃박스 배치(push_state='PENDING')가 커밋 뒤에 맡는다. FCM 키가 없으면 발송만 꺼지고 알림함은 그대로다",
+			"쓰기라 점검에서는 부르지 않는다 — 점주 앱 테스트의 설정 탭(소비자는 마이)에서 눌러 확인한다",
+		],
+	},
 ];

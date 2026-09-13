@@ -567,3 +567,5 @@ export interface OwnerHoldDetail {
 	canceledAt: string | null;
 	cancelReason: string | null;
 }
+
+export type DevicePlatform = "ANDROID" | "IOS";

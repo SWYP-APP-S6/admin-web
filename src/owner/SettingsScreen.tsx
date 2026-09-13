@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchMe } from "../api/me";
 import { fetchMyStore } from "../api/owner";
+import { DeviceTokenPanel } from "../app/DeviceTokenPanel";
 import { ErrorNote, Loading, asError, momentLabel } from "../app/shared";
 import { DAY_CHIPS, STORE_CATEGORY_LABEL, STORE_STATUS_LABEL } from "./session";
 import type { Me, StoreDetail } from "../types";
@@ -86,6 +87,8 @@ export function SettingsScreen({ accessToken, via, onSignOut }: Props) {
 				가게 정보를 <strong>수정</strong>하는 API 는 아직 없습니다 — 등록(<code>POST</code>)과
 				조회(<code>GET /owner/stores/me</code>)뿐이고, 심사 상태는 관리자 화면에서 바뀝니다.
 			</p>
+
+			<DeviceTokenPanel accessToken={accessToken} />
 
 			<button className="phone__cta phone__cta--ghost" type="button" onClick={onSignOut}>
 				로그아웃
