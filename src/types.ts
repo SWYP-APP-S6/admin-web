@@ -569,3 +569,17 @@ export interface OwnerHoldDetail {
 }
 
 export type DevicePlatform = "ANDROID" | "IOS";
+
+/** O-021. 등록 전에 서버가 같은 규칙(할인율 · 픽업 창)으로 계산해 돌려주는 미리보기. 저장하지 않는다. */
+export interface ProductPreview {
+	name: string;
+	category: ProductCategory;
+	photoUrl: string;
+	initialQty: number;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	pickupStartAt: string;
+	pickupEndAt: string;
+	ingredientTags: number[];
+}

@@ -169,9 +169,12 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		id: "O-021",
 		name: "상품 미리보기 (Bottom Sheet)",
 		frame: "상품 등록",
-		apis: [],
+		apis: ["POST /owner/products/preview"],
 		probe: "none",
-		notes: ["등록 직전 입력값을 앱이 조립해 보여주는 화면이라 서버 호출이 없다"],
+		notes: [
+			"서버가 등록과 **같은 규칙**으로 할인율·픽업 창을 계산해 돌려준다(저장하지 않는다) — 앱이 따로 계산하면 등록된 값과 어긋날 수 있다",
+			"가격·재료 id 검증도 여기서 먼저 걸린다. 쓰기 모양의 요청이라 점검에서는 부르지 않고 /owner 에서 눌러 확인한다",
+		],
 	},
 
 	{
