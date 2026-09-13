@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { logoutAppUser } from "../api/consumerAuth";
+import { setOverrideTokenRenewal } from "../api/client";
+import { issueGuestToken, logoutAppUser, refreshAppUser } from "../api/consumerAuth";
 import { fetchActiveHold } from "../api/holds";
 import { HistoryScreen } from "../consumer/HistoryScreen";
 import { HoldScreen } from "../consumer/HoldScreen";
@@ -9,7 +10,7 @@ import { InboxScreen } from "../consumer/InboxScreen";
 import { LoginScreen } from "../consumer/LoginScreen";
 import { MyScreen } from "../consumer/MyScreen";
 import { ProductScreen } from "../consumer/ProductScreen";
-import { loadSession, saveSession } from "../consumer/session";
+import { installId, loadSession, saveSession } from "../consumer/session";
 import type { Session } from "../consumer/session";
 import { clockLabel, won } from "../consumer/shared";
 import type { ActiveHoldResponse } from "../types";
@@ -43,6 +44,7 @@ export function ConsumerAppPage() {
 	const [unread, setUnread] = useState(0);
 	const [holdsChanged, setHoldsChanged] = useState(0);
 	const [loginNotice, setLoginNotice] = useState(false);
+	const [expired, setExpired] = useState(false);
 	const [tick, setTick] = useState(() => Date.now());
 
 	const signedIn = session.kind === "user";
@@ -50,6 +52,38 @@ export function ConsumerAppPage() {
 	const current = stack[stack.length - 1];
 	const tab = [...stack].reverse().find((route) => route.name === "tab");
 	const activeTab: Tab = tab && tab.name === "tab" ? tab.tab : "home";
+
+	// access 토큰이 만료되면(jwt.access-ttl=30m) 앱은 조용히 한 번 되살리고, 안 되면 로그인
+	// 화면으로 보낸다. 이게 없으면 화면마다 UNAUTHORIZED 만 뜨고 로그아웃 버튼조차 못 눌러
+	// 빠져나올 길이 없다 -- 회원은 refresh 로, 비회원은 같은 installId 로 다시 발급받는다.
+	useEffect(() => {
+		setOverrideTokenRenewal(async () => {
+			const stored = loadSession();
+			try {
+				if (stored.kind === "guest") {
+					const issued = await issueGuestToken(installId());
+					const next: Session = { kind: "guest", accessToken: issued.accessToken };
+					saveSession(next);
+					setSession(next);
+					return issued.accessToken;
+				}
+				if (stored.kind === "user" && stored.refreshToken) {
+					const tokens = await refreshAppUser(stored.refreshToken);
+					const next: Session = { ...stored, ...tokens };
+					saveSession(next);
+					setSession(next);
+					return tokens.accessToken;
+				}
+			} catch {
+				// 갱신 실패는 곧 세션 종료다. 아래에서 로그인 화면으로 보낸다.
+			}
+			saveSession({ kind: "none" });
+			setSession({ kind: "none" });
+			setExpired(true);
+			return null;
+		});
+		return () => setOverrideTokenRenewal(null);
+	}, []);
 
 	// 홈 상단 배너(C-010-06)와 마이의 취소권이 같은 응답을 쓴다. 찜이 바뀔 때만 다시 부른다.
 	const reloadActive = useCallback(() => {
@@ -74,6 +108,7 @@ export function ConsumerAppPage() {
 		setSession(next);
 		setStack([{ name: "tab", tab: "home" }]);
 		setLoginNotice(false);
+		setExpired(false);
 	}
 
 	async function signOut() {
@@ -100,6 +135,11 @@ export function ConsumerAppPage() {
 	if (session.kind === "none") {
 		return (
 			<div className="app-frame">
+				{expired && (
+					<p className="state state--error" style={{ margin: "14px 14px 0" }}>
+						로그인 세션이 만료돼 처음 화면으로 돌아왔습니다.
+					</p>
+				)}
 				<LoginScreen onSignedIn={apply} />
 			</div>
 		);
@@ -163,6 +203,7 @@ export function ConsumerAppPage() {
 				{!loginNotice && current.name === "tab" && current.tab === "home" && (
 					<HomeScreen
 						position={position}
+						accessToken={token as string}
 						onChangePosition={setPosition}
 						onOpenProduct={(productId) => push({ name: "product", productId })}
 					/>

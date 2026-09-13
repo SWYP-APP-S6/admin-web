@@ -21,3 +21,17 @@ export function logoutAppUser(refreshToken: string): Promise<void> {
 		retryOnUnauthorized: false,
 	});
 }
+
+export interface AppTokens {
+	accessToken: string;
+	refreshToken: string;
+}
+
+// 앱 유저의 refresh 는 1회용으로 회전한다. 실패하면 세션을 끝내고 로그인 화면으로 돌아간다.
+export function refreshAppUser(refreshToken: string): Promise<AppTokens> {
+	return request<AppTokens>("/auth/refresh", {
+		method: "POST",
+		body: { refreshToken },
+		retryOnUnauthorized: false,
+	});
+}

@@ -62,14 +62,44 @@ async function performRefresh(): Promise<boolean> {
 	return true;
 }
 
+// 소비자 토큰이 만료됐을 때 무엇을 할지는 앱 화면이 안다(회원이면 갱신, 비회원이면 재발급,
+// 둘 다 안 되면 로그인 화면). 여기서 세션 모듈을 import 하면 순환이 되므로 핸들러를 주입받는다.
+// 새 토큰을 돌려주면 그 토큰으로 한 번 재시도하고, null 이면 원래의 401 을 그대로 던진다.
+type TokenRenewal = () => Promise<string | null>;
+
+let renewOverrideToken: TokenRenewal | null = null;
+
+// 화면 하나가 세 개를 동시에 부르면 401 도 셋이 온다. 각자 갱신하면 비회원 토큰은 하루 발급
+// 한도를 한 번에 태우고, 회원 refresh 는 1회용이라 뒤의 둘이 이미 폐기된 토큰으로 실패한다.
+// 관리자 refresh 와 같은 이유로 진행 중인 갱신 하나를 공유한다.
+let renewalInFlight: Promise<string | null> | null = null;
+
+function renewOnce(): Promise<string | null> {
+	if (!renewOverrideToken) {
+		return Promise.resolve(null);
+	}
+	if (!renewalInFlight) {
+		renewalInFlight = renewOverrideToken().finally(() => {
+			renewalInFlight = null;
+		});
+	}
+	return renewalInFlight;
+}
+
+export function setOverrideTokenRenewal(renewal: TokenRenewal | null): void {
+	renewOverrideToken = renewal;
+}
+
 interface RequestOptions {
 	method?: string;
 	body?: unknown;
 	// 인증 흐름 자체(로그인/갱신)는 401 을 받아도 재시도하지 않는다. 무한 재귀가 된다.
 	retryOnUnauthorized?: boolean;
-	// 관리자 토큰 대신 쓸 토큰. 소비자 전용 API 를 호출할 때 넘긴다 — 이 경우 401 이 나도
-	// 관리자 refresh 로 되살릴 수 없으므로 재시도하지 않는다.
+	// 관리자 토큰 대신 쓸 토큰. 소비자 전용 API 를 호출할 때 넘긴다 — 관리자 refresh 로는
+	// 되살릴 수 없으므로 위의 renewal 핸들러가 대신 처리한다.
 	accessToken?: string;
+	// 갱신 후 재시도에서만 켠다. 갱신한 토큰도 401 이면 더 시도하지 않는다.
+	renewed?: boolean;
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -95,6 +125,13 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 		const refreshed = await refreshTokens();
 		if (refreshed) {
 			return request<T>(path, { ...options, retryOnUnauthorized: false });
+		}
+	}
+
+	if (response.status === 401 && override && !options.renewed && renewOverrideToken) {
+		const renewed = await renewOnce();
+		if (renewed) {
+			return request<T>(path, { ...options, accessToken: renewed, renewed: true });
 		}
 	}
 
