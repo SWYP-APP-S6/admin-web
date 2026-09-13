@@ -1,4 +1,5 @@
 import { fetchActiveHold } from "../api/holds";
+import { DeviceTokenPanel } from "../app/DeviceTokenPanel";
 import { fetchMe } from "../api/me";
 import { useAsync } from "../hooks/useAsync";
 import { ErrorNote, Loading, momentLabel } from "../app/shared";
@@ -96,6 +97,8 @@ export function MyScreen({ accessToken, reloadKey, via, onSignOut }: Props) {
 					약관은 항목별로 저장하지 않습니다 — 필수 전건에 동의한 시각 하나뿐입니다.
 				</p>
 			</section>
+
+			<DeviceTokenPanel accessToken={accessToken} />
 
 			<button className="phone__cta phone__cta--ghost" type="button" onClick={onSignOut}>
 				로그아웃

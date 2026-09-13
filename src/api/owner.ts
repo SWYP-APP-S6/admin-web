@@ -6,6 +6,7 @@ import type {
 	OwnerHoldStatus,
 	OwnerHome,
 	OwnerProductDetail,
+	ProductPreview,
 	ProductRegisterPayload,
 	StoreDetail,
 	StoreRegisterPayload,
@@ -36,6 +37,18 @@ export function registerProduct(
 	accessToken: string,
 ): Promise<OwnerProductDetail> {
 	return request<OwnerProductDetail>("/owner/products", {
+		method: "POST",
+		body: payload,
+		accessToken,
+	});
+}
+
+/** 등록 전 미리보기(O-021). 저장하지 않지만 가격 · 픽업 창 · 재료 id 는 등록과 같은 규칙으로 검증된다. */
+export function previewProduct(
+	payload: ProductRegisterPayload,
+	accessToken: string,
+): Promise<ProductPreview> {
+	return request<ProductPreview>("/owner/products/preview", {
 		method: "POST",
 		body: payload,
 		accessToken,

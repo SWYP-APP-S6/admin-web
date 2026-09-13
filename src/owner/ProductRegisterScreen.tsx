@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { registerProduct } from "../api/owner";
+import { previewProduct, registerProduct } from "../api/owner";
 import { ErrorNote, asError, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
-import type { OwnerProductDetail, ProductCategory } from "../types";
+import type {
+	OwnerProductDetail,
+	ProductCategory,
+	ProductPreview,
+	ProductRegisterPayload,
+} from "../types";
 
 // 사진 업로드 엔드포인트가 아직 없어 서버가 받는 것은 URL 문자열 하나뿐이다. 시드가 쓰는 것과
 // 같은 자리표시자를 눌러 넣을 수 있게 해 둔다 -- 손으로 URL 을 만들어 넣는 수고를 없앤다.
@@ -37,7 +42,7 @@ export function ProductRegisterScreen({
 	onCancel,
 }: Props) {
 	const [step, setStep] = useState<1 | 2 | 3>(1);
-	const [preview, setPreview] = useState(false);
+	const [preview, setPreview] = useState<ProductPreview | null>(null);
 	const [photoUrl, setPhotoUrl] = useState(SAMPLE_PHOTOS[0]);
 	const [name, setName] = useState("");
 	const [category, setCategory] = useState<ProductCategory>("ETC");
@@ -61,28 +66,41 @@ export function ProductRegisterScreen({
 		.map((piece) => Number(piece.trim()))
 		.filter((value) => Number.isInteger(value) && value > 0);
 
+	function payload(): ProductRegisterPayload {
+		return {
+			name: name.trim(),
+			category,
+			initialQty: qty,
+			originalPrice: original,
+			salePrice: sale,
+			photoUrl: photoUrl.trim(),
+			ingredientTags,
+			pickupEndAt: pickupEndAt === "" ? null : `${pickupEndAt}:00`,
+		};
+	}
+
+	// 미리보기를 화면이 조립하지 않고 서버에 물어본다. 할인율·픽업 창을 등록과 같은 규칙으로
+	// 계산해 주고, 가격·재료 id 가 틀렸다면 상품이 만들어지기 전에 여기서 거절된다.
+	async function openPreview() {
+		setBusy(true);
+		setError(null);
+		try {
+			setPreview(await previewProduct(payload(), accessToken));
+		} catch (caught) {
+			setError(asError(caught));
+		} finally {
+			setBusy(false);
+		}
+	}
+
 	async function submit() {
 		setBusy(true);
 		setError(null);
 		try {
-			onRegistered(
-				await registerProduct(
-					{
-						name: name.trim(),
-						category,
-						initialQty: qty,
-						originalPrice: original,
-						salePrice: sale,
-						photoUrl: photoUrl.trim(),
-						ingredientTags,
-						pickupEndAt: pickupEndAt === "" ? null : `${pickupEndAt}:00`,
-					},
-					accessToken,
-				),
-			);
+			onRegistered(await registerProduct(payload(), accessToken));
 		} catch (caught) {
 			setError(asError(caught));
-			setPreview(false);
+			setPreview(null);
 		} finally {
 			setBusy(false);
 		}
@@ -98,17 +116,26 @@ export function ProductRegisterScreen({
 					<p className="app-sub">손님께는 이렇게 보여요.</p>
 
 					<div className="app-item">
-						<img className="app-item__thumb" src={photoUrl} alt="" />
+						<img className="app-item__thumb" src={preview.photoUrl} alt="" />
 						<span className="app-item__body">
-							<span className="app-item__name">{name}</span>
+							<span className="app-item__name">{preview.name}</span>
 							<span className="app-item__price">
-								<b>{won(sale)}</b> <s>{won(original)}</s>
+								<b>{won(preview.salePrice)}</b> <s>{won(preview.originalPrice)}</s>
 							</span>
 							<span className="app-item__meta">
-								{rate}% 할인 · {qty}개 남음
+								{preview.discountRate}% 할인 · {preview.initialQty}개 남음
 							</span>
 						</span>
 					</div>
+
+					<div className="phone__row">
+						<strong>픽업</strong>
+						{preview.pickupStartAt.slice(11, 16)} ~ {preview.pickupEndAt.slice(11, 16)}
+					</div>
+					<p className="app-hint">
+						서버가 <code>POST /owner/products/preview</code> 로 계산한 값입니다 — 저장되지
+						않았고, 할인율과 픽업 창은 등록될 때와 같은 규칙으로 나왔습니다.
+					</p>
 
 					{error && <ErrorNote error={error} />}
 
@@ -117,7 +144,7 @@ export function ProductRegisterScreen({
 							className="phone__cta phone__cta--ghost"
 							type="button"
 							disabled={busy}
-							onClick={() => setPreview(false)}
+							onClick={() => setPreview(null)}
 						>
 							수정하기
 						</button>
@@ -326,10 +353,10 @@ export function ProductRegisterScreen({
 			<button
 				className="phone__cta"
 				type="button"
-				disabled={ingredientTags.length > 5}
-				onClick={() => setPreview(true)}
+				disabled={busy || ingredientTags.length > 5}
+				onClick={openPreview}
 			>
-				등록하기
+				{busy ? "확인 중…" : "등록하기"}
 			</button>
 			<button className="phone__cta phone__cta--ghost" type="button" onClick={() => setStep(2)}>
 				이전
