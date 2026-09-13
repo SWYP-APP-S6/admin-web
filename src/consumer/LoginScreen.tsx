@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { issueGuestToken } from "../api/consumerAuth";
 import { issueTestToken } from "../api/devToken";
 import { exchangeKakaoCode, loginWithKakao, signupWithKakao } from "../api/kakaoAuth";
-import { ErrorNote, asError } from "./shared";
+import { ErrorNote, asError } from "../app/shared";
 import { installId } from "./session";
 import type { Session } from "./session";
 

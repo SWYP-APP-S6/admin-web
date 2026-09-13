@@ -3,7 +3,7 @@ import { fetchNearbyProducts, fetchNearbyStores } from "../api/browse";
 import { fetchMyLocation, setMyLocation } from "../api/myLocation";
 import { useAsync } from "../hooks/useAsync";
 import type { NearbyProductSort, ProductCategory } from "../types";
-import { ErrorNote, Loading, deadlineLabel, won } from "./shared";
+import { ErrorNote, Loading, deadlineLabel, won } from "../app/shared";
 
 /** 서버가 받는 범위는 100~5000m. 안 보내면 browse.nearby-radius-meters(1km). */
 const RADII = [500, 1000, 2000, 5000];

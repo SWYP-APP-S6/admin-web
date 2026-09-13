@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { cancelHold, fetchHold } from "../api/holds";
 import type { HoldDetail } from "../types";
-import { ErrorNote, Loading, asError, clockLabel, momentLabel, won } from "./shared";
+import { ErrorNote, Loading, asError, clockLabel, momentLabel, won } from "../app/shared";
 
 /** 화면이 분홍으로 바뀌는 지점. 서버가 단계를 계산해 내리면 응답을 받은 순간 이미 낡는다. */
 const HURRY_MS = 5 * 60 * 1000;

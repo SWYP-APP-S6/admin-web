@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fetchHoldHistory } from "../api/holds";
 import { useAsync } from "../hooks/useAsync";
 import type { HoldStatus } from "../types";
-import { ErrorNote, Loading, momentLabel, won } from "./shared";
+import { ErrorNote, Loading, momentLabel, won } from "../app/shared";
 
 const STATUS_LABEL: Record<HoldStatus, string> = {
 	HOLDING: "진행 중",

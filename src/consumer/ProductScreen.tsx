@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { addToHold, fetchProductDetail } from "../api/holds";
 import { useAsync } from "../hooks/useAsync";
 import type { HoldButtonState, HoldDetail } from "../types";
-import { ErrorNote, Loading, asError, localTimeLabel, won } from "./shared";
+import { ErrorNote, Loading, asError, localTimeLabel, won } from "../app/shared";
 import type { Position } from "./HomeScreen";
 
 /** 서버 정책(hold.user-qty-limit)과 같은 값. 더 담기로 우회되지 않는다. */
