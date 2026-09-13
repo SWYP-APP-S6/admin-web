@@ -137,6 +137,9 @@ export interface StoreSummary {
 }
 
 export interface StoreDetail extends StoreSummary {
+	categories: StoreCategory[];
+	postalCode: string | null;
+	businessDays: DayOfWeek[];
 	businessRegistrationNumber: string | null;
 	applicationNote: string | null;
 }
@@ -391,4 +394,176 @@ export interface MyLocation {
 		longitude: number;
 		updatedAt: string;
 	} | null;
+}
+
+export type StoreCategory =
+	| "VEGETABLE"
+	| "FRUIT"
+	| "MEAT"
+	| "SEAFOOD"
+	| "DAIRY_EGG"
+	| "BAKERY"
+	| "PREPARED_FOOD"
+	| "ETC";
+
+export type DayOfWeek =
+	| "MONDAY"
+	| "TUESDAY"
+	| "WEDNESDAY"
+	| "THURSDAY"
+	| "FRIDAY"
+	| "SATURDAY"
+	| "SUNDAY";
+
+/** O-003. 주소 → 좌표 변환은 서버가 카카오 로컬 API 로 한다 — 앱은 주소 문자열만 보낸다. */
+export interface StoreRegisterPayload {
+	name: string;
+	categories: StoreCategory[];
+	postalCode: string | null;
+	address: string;
+	addressDetail: string | null;
+	phone: string;
+	businessOpenTime: string;
+	businessCloseTime: string;
+	businessDays: DayOfWeek[];
+	businessRegistrationNumber: string | null;
+	applicationNote: string | null;
+}
+
+/** O-020. 사진은 URL 문자열 하나다 — 업로드 엔드포인트는 아직 없다. */
+export interface ProductRegisterPayload {
+	name: string;
+	category: ProductCategory;
+	initialQty: number;
+	originalPrice: number;
+	salePrice: number;
+	photoUrl: string;
+	ingredientTags: number[];
+	/** 미입력이면 서버가 가게 영업 종료 시각으로 채운다. */
+	pickupEndAt: string | null;
+}
+
+/** O-030. 소비자용 상품 상세와 달리 재고 원장(최초 등록 · 방문 예정 · 픽업 완료)이 들어 있다. */
+export interface OwnerProductDetail {
+	id: number;
+	name: string;
+	category: ProductCategory;
+	initialQty: number;
+	availableQty: number;
+	heldQty: number;
+	completedQty: number;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	pickupStartAt: string;
+	pickupEndAt: string;
+	photoUrl: string;
+	/** 재료 id 만 온다 — 이름을 주는 API 가 없어 화면에 숫자가 그대로 보인다. */
+	ingredientTags: number[];
+	status: ProductStatus;
+	reconfirmSentAt: string | null;
+	reconfirmAnsweredAt: string | null;
+	createdAt: string;
+}
+
+/** 남은 수량을 0 으로 내릴 때 진행 중인 찜을 어떻게 할지. 활성 찜이 있으면 서버가 요구한다. */
+export type HoldDisposition = "KEEP_HOLDS" | "CANCEL_ALL";
+
+export interface OwnerHomeVisit {
+	holdId: number;
+	nickname: string;
+	summary: string;
+	totalQty: number;
+	expiresAt: string;
+}
+
+export interface OwnerHomeProductCard {
+	id: number;
+	name: string;
+	category: ProductCategory;
+	photoUrl: string;
+	salePrice: number;
+	availableQty: number;
+	activeHoldQty: number;
+	status: ProductStatus;
+	reconfirmPending: boolean;
+}
+
+/** O-010. 점주 홈 한 화면을 위한 조합 응답(com.swyp.backend.home). */
+export interface OwnerHome {
+	store: {
+		id: number;
+		name: string;
+		status: StoreStatus;
+		categories: StoreCategory[];
+	};
+	summary: {
+		upcomingVisitCount: number;
+		completedTodayCount: number;
+		onSaleQty: number;
+	};
+	issues: {
+		expiredTodayCount: number;
+	};
+	unreadNotificationCount: number;
+	reconfirmPendingCount: number;
+	hasRegisteredProduct: boolean;
+	upcomingVisits: OwnerHomeVisit[];
+	/** 지금 판매중인 것만 온다 — 종료 · 품절 상품은 이 목록에 없다. */
+	products: OwnerHomeProductCard[];
+}
+
+/** 점주가 보는 찜 상태. 소비자의 CANCELED 가 취소 주체로 갈라진다. */
+export type OwnerHoldStatus =
+	| "HOLDING"
+	| "COMPLETED"
+	| "EXPIRED"
+	| "CANCELED_BY_OWNER"
+	| "CANCELED_BY_USER";
+
+export interface OwnerHoldSummary {
+	id: number;
+	status: OwnerHoldStatus;
+	nickname: string;
+	totalQty: number;
+	items: { productId: number; productName: string; qty: number }[];
+	heldAt: string;
+	expiresAt: string;
+}
+
+export interface OwnerHoldCounts {
+	all: number;
+	holding: number;
+	completed: number;
+	expired: number;
+	canceledByOwner: number;
+	canceledByUser: number;
+}
+
+export interface OwnerHoldList {
+	counts: OwnerHoldCounts;
+	holds: PageResponse<OwnerHoldSummary>;
+}
+
+export interface OwnerHoldDetail {
+	id: number;
+	status: OwnerHoldStatus;
+	nickname: string;
+	storeName: string;
+	totalQty: number;
+	totalPrice: number;
+	items: {
+		productId: number;
+		productName: string;
+		photoUrl: string;
+		qty: number;
+		unitPrice: number;
+		lineTotal: number;
+	}[];
+	heldAt: string;
+	expiresAt: string;
+	serverTime: string;
+	completedAt: string | null;
+	canceledAt: string | null;
+	cancelReason: string | null;
 }

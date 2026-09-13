@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { ConsumerAppPage } from "./pages/ConsumerAppPage";
 import { FlowCheckPage } from "./pages/FlowCheckPage";
 import { LoginPage } from "./pages/LoginPage";
+import { OwnerAppPage } from "./pages/OwnerAppPage";
 import { PasswordPage } from "./pages/PasswordPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
@@ -47,6 +48,7 @@ export default function App() {
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/app" element={<ConsumerAppPage />} />
 						<Route path="/flow" element={<FlowCheckPage />} />
+						<Route path="/owner" element={<OwnerAppPage />} />
 						<Route path="/password" element={<PasswordPage />} />
 					</Route>
 					<Route path="*" element={<Navigate to="/recipes" replace />} />
