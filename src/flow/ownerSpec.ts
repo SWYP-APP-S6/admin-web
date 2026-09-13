@@ -114,7 +114,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "판매중 · 방문 예정 수량", path: "products[0].activeHoldQty" },
 		],
 		missing: [
-			"`N명은 제품 구매가 불가능해요` — 남은 수량보다 찜이 많을 때 그 **인원 수**를 서버가 세지 않는다(수량 차이는 activeHoldQty − availableQty 로 앱이 낼 수 있지만 사람 수는 아니다)",
+			"`N명은 제품 구매가 불가능해요` 의 **인원 수**는 없다 — 부족분 수량은 issues.shortfallQty·productsShortOfStock 과 카드별 shortfallQty 로 오지만, 그게 몇 명의 찜인지는 세지 않는다",
 		],
 		gaps: [
 			"`곧 방문해요`의 카운트다운 기준 시각이 없다 — 응답에 serverTime 이 없어 단말 시계로 세야 한다(찜 상세에는 있다)",
@@ -210,11 +210,20 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "할인율", path: "discountRate" },
 			{ label: "픽업 종료시간", path: "pickupEndAt" },
 			{ label: "상태", path: "status" },
+			{ label: "선반 총 수량", path: "stockQty" },
+			{ label: "부족분", path: "shortfallQty" },
+			{ label: "스테퍼 하한", path: "minAdjustableQty" },
+			{ label: "수정 가능", path: "stockEditable" },
+			{ label: "재확인 대기", path: "reconfirmPending" },
 			{ label: "식자재 태그", path: "ingredientTags[0]", optional: true },
 		],
 		gaps: [
 			"식자재 태그가 **id 숫자만** 온다 — 화면의 `복숭아(대표) · 청과` 처럼 이름을 보여줄 수 없다",
-			"가격 · 픽업 종료시간을 고치는 API 가 없다 — 이 화면에서 바꿀 수 있는 것은 남은 수량뿐이다",
+			"가격 · 픽업 종료시간을 고치는 API 가 없다 — 이 화면에서 바꿀 수 있는 것은 수량뿐이다",
+		],
+		notes: [
+			"점주가 적는 수는 **선반에 있는 총 수량**(찜 포함)이다 — 손님에게 보이는 availableQty 는 서버가 거기서 찜을 뺀 값이고, 모자란 만큼이 shortfallQty 로 온다",
+			"stockEditable 은 서버가 거부하는 조건(확정 잠금 · 마감)과 같은 식으로 계산된다 — 화면이 따로 판단하지 않는다",
 		],
 	},
 	{
@@ -224,8 +233,8 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		apis: ["PATCH /owner/products/{id}/available-qty"],
 		probe: "none",
 		notes: [
-			"수량을 0 으로 내리는데 진행 중인 찜이 있으면 서버가 400 DISPOSITION_REQUIRED 로 되돌려보낸다 — 그 오류가 곧 시트를 띄우라는 신호다",
-			"KEEP_HOLDS 는 찜을 그대로 두고, CANCEL_ALL 은 그 상품의 활성 찜을 전부 취소하며 손님에게 알림 행을 만든다",
+			"찜이 적은 수량을 넘으면 `cancelOverflow` 가 정한다 — true 면 **먼저 찜한 순으로 배정하고 넘치는 찜만** 취소하며 손님에게 알림 행을 만들고, false 면 수량만 저장되고 찜은 남는다(BR-015)",
+			"선반을 0 으로 내리면서 cancelOverflow 를 켜는 것이 예전 CANCEL_ALL 이다",
 			"점검이 실제로 수량을 바꾸지는 않는다 — 재고가 움직인다. /owner 에서 눌러 확인한다",
 		],
 	},
@@ -233,13 +242,17 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		id: "O-050 · O-051",
 		name: "재고 재확인 모달 · 수량 직접 입력",
 		frame: "상품 관리",
-		apis: ["PATCH /owner/products/{id}/available-qty (수량만)"],
-		probe: "none",
-		missing: [
-			"재확인을 **요청하는 쪽**이 없다 — STOCK_RECONFIRM_REQUEST 는 enum 값뿐이고 알림을 만드는 배치가 없다",
-			"`네, 맞아요`를 기록하는 엔드포인트가 없다 — products.reconfirm_answered_at 을 채우는 곳이 어디에도 없어 홈의 reconfirmPendingCount 가 줄지 않는다",
+		apis: [
+			"POST /owner/products/{id}/stock-reconfirm",
+			"PATCH /owner/products/{id}/stock (아니요 → 수량 직접 입력)",
 		],
-		notes: ["`아니요 → 수량 직접 입력`(O-051)은 결국 available-qty 라 그 경로는 이미 있다"],
+		probe: "none",
+		notes: [
+			"요청은 찜이 최초 등록의 60% 에 닿는 순간 서버가 **한 번만** 보낸다(HoldService, STOCK_RECONFIRM_REQUEST). 상품 상세의 reconfirmPending 이 그 신호다",
+			"`네, 맞아요`는 픽업 마감까지 수량을 잠근다(이후 409 STOCK_LOCKED). 마감이 지나면 다시 열린다",
+			"찜이 이미 선반보다 많은 상태에서 `네`는 거절된다(409 STOCK_SHORT_OF_HOLDS) — 부족분을 먼저 처리해야 한다",
+			"한 번 답하면 다시 답할 수 없다(409 RECONFIRM_NOT_REQUESTED)",
+		]
 	},
 
 	{
@@ -301,8 +314,10 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		apis: [],
 		probe: "none",
 		missing: [
-			"점주가 **특정 찜을 취소하는 API 가 없다** — 지금은 상품의 남은 수량을 0 으로 내리면서 CANCEL_ALL 로 그 상품의 활성 찜을 전부 취소하는 경로뿐이다",
-			"`먼저 찜한 순서대로 재고를 배정하고 부족분만큼 고른다`는 계산이 서버에 없다 — 취소 대상 목록을 만들어 줄 곳이 없다",
+			"**취소 대상 목록을 보여줄 API 가 없다** — 선착순 배정과 취소 자체는 `PATCH /stock` 의 cancelOverflow 안에서 일어나므로, 화면이 `어느 찜이 취소되는지`를 미리 체크박스로 보여줄 수 없다",
+		],
+		notes: [
+			"먼저 찜한 순으로 배정하고 넘치는 찜만 취소하는 계산은 서버에 있다(createdAt, id 순) — 없는 것은 그 결과를 **미리 보여주는** 경로뿐이다",
 		],
 	},
 	{
@@ -312,7 +327,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		apis: [],
 		probe: "none",
 		missing: [
-			"안내 문구를 미리 보여주는 API 가 없다 — CANCEL_ALL 이 서버에 하드코딩된 문구로 알림 행을 만든다(`점주가 판매를 종료해 찜이 취소됐어요.`)",
+			"안내 문구를 미리 보여주는 API 가 없다 — cancelOverflow 가 서버에 하드코딩된 문구로 알림 행을 만든다(`… 재고가 모자라 찜이 취소됐어요. 결제된 금액은 없어요.`)",
 		],
 		notes: ["피그마의 문구는 매장명·연락처가 들어간 SMS 형식이다 — 지금 알림 본문과 형태가 다르다"],
 	},

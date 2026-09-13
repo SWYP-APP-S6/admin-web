@@ -30,7 +30,8 @@ export function OwnerHomeScreen({
 		return () => window.clearInterval(timer);
 	}, []);
 
-	const issueCount = home.issues.expiredTodayCount + home.reconfirmPendingCount;
+	const issueCount =
+		home.issues.expiredTodayCount + home.reconfirmPendingCount + home.issues.productsShortOfStock;
 
 	if (!home.hasRegisteredProduct) {
 		return (
@@ -100,8 +101,14 @@ export function OwnerHomeScreen({
 					)}
 					{home.reconfirmPendingCount > 0 && (
 						<span className="owner-issue__row owner-issue__row--flat">
-							재고 재확인 요청에 답하지 않은 상품이 {home.reconfirmPendingCount}개 있어요
-							(O-050 응답 API 미구현)
+							재고 재확인에 답하지 않은 상품이 {home.reconfirmPendingCount}개 있어요. 상품을 열면
+							바로 물어봅니다.
+						</span>
+					)}
+					{home.issues.productsShortOfStock > 0 && (
+						<span className="owner-issue__row owner-issue__row--flat">
+							찜이 재고를 넘어선 상품이 {home.issues.productsShortOfStock}개 있어요 (부족분 총{" "}
+							{home.issues.shortfallQty}개)
 						</span>
 					)}
 				</section>
@@ -165,9 +172,9 @@ export function OwnerHomeScreen({
 								남은 수량 {product.availableQty}개 · 방문 예정 {product.activeHoldQty}개
 								{product.status !== "ON_SALE" && ` · ${product.status}`}
 							</span>
-							{product.activeHoldQty > product.availableQty && (
+							{product.shortfallQty > 0 && (
 								<span className="owner-product__warn">
-									❗ 찜이 남은 수량보다 많아요 (초과 {product.activeHoldQty - product.availableQty}개)
+									❗ 찜이 선반보다 {product.shortfallQty}개 많아요
 								</span>
 							)}
 						</span>

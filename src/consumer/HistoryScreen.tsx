@@ -58,10 +58,11 @@ export function HistoryScreen({ accessToken, reloadKey, onOpenHold }: Props) {
 						<span className={STATUS_TAG[entry.status]}>{STATUS_LABEL[entry.status]}</span>
 					</span>
 					<span className="app-item__meta">
-						{entry.items.map((item) => `${item.name} ${item.qty}개`).join(" · ")}
+						{entry.productName} {entry.qty}개
 					</span>
 					<span className="app-item__meta">
-						{entry.totalQty}개 · {won(entry.totalPrice)} · {momentLabel(entry.heldAt)}
+						{entry.qty}개 · {won(entry.totalPrice)} · {momentLabel(entry.heldAt)}
+						{entry.cancelCreditUsed && " · 취소권 차감"}
 					</span>
 				</button>
 			))}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchOwnerProduct, updateAvailableQty } from "../api/owner";
-import { ErrorNote, Loading, asError, codeOf, localTimeLabel, won } from "../app/shared";
+import { answerStockReconfirm, fetchOwnerProduct, updateStock } from "../api/owner";
+import { ErrorNote, Loading, asError, localTimeLabel, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
 import type { OwnerProductDetail } from "../types";
 
@@ -11,15 +11,15 @@ interface Props {
 }
 
 /**
- * O-030 상품 관리 상세 + O-030/O-051 바텀시트. 수량을 0 으로 내리는데 진행 중인 찜이 있으면
- * 서버가 `DISPOSITION_REQUIRED` 로 되돌려보낸다 -- 그 오류가 곧 "찜을 어떻게 할까요?" 시트를
- * 띄우라는 신호다. 화면이 미리 판단하지 않고 서버의 판정을 그대로 따른다.
+ * O-030 상품 관리 상세 + O-050 재고 재확인 + O-051 수량 직접 입력.
+ *
+ * 점주가 적는 수는 **선반에 있는 총 수량**이다(찜 포함). 손님에게 보이는 수량은 서버가 거기서
+ * 찜을 빼 만들고, 찜이 더 많으면 그 차이가 shortfallQty 로 내려온다 -- 화면이 계산하지 않는다.
  */
 export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) {
 	const [product, setProduct] = useState<OwnerProductDetail | null>(null);
-	const [qty, setQty] = useState(0);
+	const [stock, setStock] = useState(0);
 	const [confirming, setConfirming] = useState(false);
-	const [askDisposition, setAskDisposition] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const [saved, setSaved] = useState(false);
@@ -30,7 +30,7 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 			.then((detail) => {
 				if (active) {
 					setProduct(detail);
-					setQty(detail.availableQty);
+					setStock(detail.stockQty);
 				}
 			})
 			.catch((caught) => {
@@ -50,70 +50,68 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 		return <Loading />;
 	}
 
-	async function save(disposition: "KEEP_HOLDS" | "CANCEL_ALL" | null) {
+	function apply(updated: OwnerProductDetail) {
+		setProduct(updated);
+		setStock(updated.stockQty);
+		setConfirming(false);
+		setSaved(true);
+		onSaved();
+	}
+
+	async function run(work: () => Promise<OwnerProductDetail>) {
 		setBusy(true);
 		setError(null);
 		try {
-			const updated = await updateAvailableQty(productId, qty, disposition, accessToken);
-			setProduct(updated);
-			setQty(updated.availableQty);
-			setConfirming(false);
-			setAskDisposition(false);
-			setSaved(true);
-			onSaved();
+			apply(await work());
 		} catch (caught) {
-			const failure = asError(caught);
-			if (codeOf(failure) === "DISPOSITION_REQUIRED") {
-				setConfirming(false);
-				setAskDisposition(true);
-			} else {
-				setError(failure);
-				setConfirming(false);
-				setAskDisposition(false);
-			}
+			setError(asError(caught));
+			setConfirming(false);
 		} finally {
 			setBusy(false);
 		}
 	}
 
-	if (askDisposition) {
+	const shortfall = Math.max(0, product.heldQty - stock);
+
+	if (product.reconfirmPending) {
 		return (
 			<div className="app-screen">
 				<div className="sheet">
 					<h3 className="app-title" style={{ fontSize: 18 }}>
-						진행 중인 찜이 있어요.
+						지금 남아있는 수량이
 						<br />
-						어떻게 할까요?
+						<span className="owner-accent">{product.stockQty}개</span>가 맞나요?
 					</h3>
-					<p className="app-sub">
-						수량을 0 으로 내리면 손님께는 숨겨집니다. 이미 잡혀 있는 찜은 그대로 둘지, 전부
-						취소할지 서버가 물어봅니다(<code>DISPOSITION_REQUIRED</code>).
+					<p className="app-sub">{product.name}</p>
+					<p className="app-hint">
+						찜이 최초 등록 수량에 가까워져 서버가 한 번 물어봅니다. 「네」는 픽업 마감까지 수량을
+						잠그고, 「아니요」는 실제 재고를 적을 수 있게 엽니다.
 					</p>
+
 					{error && <ErrorNote error={error} />}
+
 					<button
 						className="phone__cta"
 						type="button"
 						disabled={busy}
-						onClick={() => save("KEEP_HOLDS")}
+						onClick={() => run(() => answerStockReconfirm(productId, true, accessToken))}
 					>
-						찜은 그대로 두기 (KEEP_HOLDS)
+						네, 맞아요
 					</button>
 					<button
 						className="phone__cta phone__cta--ghost"
 						type="button"
 						disabled={busy}
-						onClick={() => save("CANCEL_ALL")}
+						onClick={() => run(() => answerStockReconfirm(productId, false, accessToken))}
 					>
-						찜 전부 취소하고 안내 보내기 (CANCEL_ALL)
+						아니요
 					</button>
-					<button
-						className="phone__cta phone__cta--ghost"
-						type="button"
-						disabled={busy}
-						onClick={() => setAskDisposition(false)}
-					>
-						나중에 하기
-					</button>
+					{product.shortfallQty > 0 && (
+						<p className="owner-warn">
+							⚠️ 지금 찜이 선반보다 {product.shortfallQty}개 많습니다 — 「네」는 거절됩니다
+							(<code>STOCK_SHORT_OF_HOLDS</code>). 「아니요」로 실제 수량을 적어주세요.
+						</p>
+					)}
 				</div>
 			</div>
 		);
@@ -126,32 +124,60 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 					<h3 className="app-title" style={{ fontSize: 18 }}>
 						지금 판매 가능한 수량이
 						<br />
-						<span className="owner-accent">{qty}개</span>가 맞나요?
+						<span className="owner-accent">{Math.max(0, stock - product.heldQty)}개</span>가
+						맞나요?
 					</h3>
 					<p className="app-sub">
-						{qty === 0 ? "재고가 없으면 손님께 숨겨져요." : product.name}
+						선반에 {stock}개, 그중 {product.heldQty}개는 이미 찜이에요.
 					</p>
-					{qty > 0 && qty < product.heldQty && (
+
+					{shortfall > 0 && (
 						<p className="state state--error">
-							이미 잡힌 찜이 {product.heldQty}개라 {product.heldQty - qty}개가 부족합니다. 지금
-							서버는 <strong>선별 취소를 지원하지 않아</strong>(O-042 미구현) 수량만 내려가고 찜은
-							그대로 남습니다.
+							재고가 {shortfall}개 부족해요. 먼저 찜한 순서대로 배정하고 넘치는 찜을 취소하거나,
+							수량만 저장하고 찜은 그대로 둘 수 있어요.
 						</p>
 					)}
 					{error && <ErrorNote error={error} />}
-					<div className="owner-sheet__actions">
-						<button
-							className="phone__cta phone__cta--ghost"
-							type="button"
-							disabled={busy}
-							onClick={() => setConfirming(false)}
-						>
-							아니요
-						</button>
-						<button className="phone__cta" type="button" disabled={busy} onClick={() => save(null)}>
-							{busy ? "저장 중…" : "네, 맞아요"}
-						</button>
-					</div>
+
+					{shortfall > 0 ? (
+						<>
+							<button
+								className="phone__cta"
+								type="button"
+								disabled={busy}
+								onClick={() => run(() => updateStock(productId, stock, true, accessToken))}
+							>
+								찜 취소하고 안내 보내기
+							</button>
+							<button
+								className="phone__cta phone__cta--ghost"
+								type="button"
+								disabled={busy}
+								onClick={() => run(() => updateStock(productId, stock, false, accessToken))}
+							>
+								나중에 하기 (수량만 저장)
+							</button>
+						</>
+					) : (
+						<div className="owner-sheet__actions">
+							<button
+								className="phone__cta phone__cta--ghost"
+								type="button"
+								disabled={busy}
+								onClick={() => setConfirming(false)}
+							>
+								아니요
+							</button>
+							<button
+								className="phone__cta"
+								type="button"
+								disabled={busy}
+								onClick={() => run(() => updateStock(productId, stock, false, accessToken))}
+							>
+								{busy ? "저장 중…" : "네, 맞아요"}
+							</button>
+						</div>
+					)}
 				</div>
 			</div>
 		);
@@ -191,6 +217,10 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 				오늘 {localTimeLabel(product.pickupEndAt)}
 			</div>
 			<div className="phone__row">
+				<strong>손님에게 보이는 수량</strong>
+				{product.availableQty}개
+			</div>
+			<div className="phone__row">
 				<strong>식자재 태그</strong>
 				{product.ingredientTags.length === 0
 					? "없음"
@@ -202,26 +232,45 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 			</div>
 
 			<h3 className="owner-section">매장에 남은 수량</h3>
-			<p className="app-hint">현재 시점에서 판매 가능한 개수를 입력해주세요.</p>
+			<p className="app-hint">
+				선반에 있는 <strong>총 수량</strong>을 적습니다(찜 포함). 손님에게 보이는 수량은 서버가
+				여기서 찜을 빼 만듭니다.
+			</p>
 			<div className="stepper__controls">
 				<button
 					className="stepper__button"
 					type="button"
-					disabled={qty <= 0}
-					onClick={() => setQty((current) => current - 1)}
+					disabled={!product.stockEditable || stock <= product.minAdjustableQty}
+					onClick={() => setStock((current) => current - 1)}
 				>
 					−
 				</button>
-				<strong>{qty}</strong>
+				<strong>{stock}</strong>
 				<button
 					className="stepper__button"
 					type="button"
-					onClick={() => setQty((current) => current + 1)}
+					disabled={!product.stockEditable}
+					onClick={() => setStock((current) => current + 1)}
 				>
 					+
 				</button>
 			</div>
-			{qty === 0 && <p className="owner-warn">⚠️ 수량을 0으로 변경하면 손님께는 숨겨져요.</p>}
+
+			{!product.stockEditable && (
+				<p className="owner-warn">
+					⚠️ 수량이 맞다고 확인했거나 마감된 상품이라 지금은 고칠 수 없습니다(픽업 마감이 지나면
+					다시 열립니다).
+				</p>
+			)}
+			{product.stockEditable && product.minAdjustableQty > 0 && (
+				<p className="app-hint">
+					재고 재확인 전에는 <strong>{product.minAdjustableQty}개</strong> 아래로 내릴 수 없습니다
+					(<code>QTY_BELOW_MINIMUM</code>).
+				</p>
+			)}
+			{shortfall > 0 && (
+				<p className="owner-warn">⚠️ 저장하면 찜 {shortfall}개가 재고를 넘어섭니다.</p>
+			)}
 
 			{error && <ErrorNote error={error} />}
 			{saved && <p className="state">저장했습니다.</p>}
@@ -229,7 +278,7 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 			<button
 				className="phone__cta"
 				type="button"
-				disabled={busy || qty === product.availableQty}
+				disabled={busy || !product.stockEditable || stock === product.stockQty}
 				onClick={() => {
 					setSaved(false);
 					setConfirming(true);
@@ -237,13 +286,6 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 			>
 				저장하기
 			</button>
-
-			<p className="app-hint">
-				재고 재확인(O-050 · O-051)의 <code>네/아니요</code> 는 이 화면과 같은
-				<code>PATCH /owner/products/{"{id}"}/available-qty</code> 로 처리됩니다. 다만 요청을
-				<strong> 보내는 쪽(배치)과 답변을 기록하는 엔드포인트</strong>가 아직 없어
-				<code>reconfirm_answered_at</code> 은 채워지지 않습니다.
-			</p>
 		</div>
 	);
 }

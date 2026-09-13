@@ -179,7 +179,7 @@ export function StoreManageScreen({
 									<span className={STATUS_TAG[hold.status]}>{STATUS_LABEL[hold.status]}</span>
 								</button>
 								<p className="owner-hold__items">
-									{hold.items.map((item) => `${item.productName} * ${item.qty}`).join(", ")}
+									{hold.productName} * {hold.qty}
 								</p>
 								<div className="owner-hold__foot">
 									<span className="table__muted">
