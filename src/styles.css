@@ -1694,3 +1694,12 @@ button.app-item:hover {
 .flow-field--norows > span:first-child {
 	color: #8a5a11;
 }
+
+/* 홈 헤더의 동네 이름. 저장된 기본 동네가 없으면 고른 프리셋 이름을 대신 보여준다. */
+.app-place__region {
+	font-size: 14px;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

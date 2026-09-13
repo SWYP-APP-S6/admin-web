@@ -45,7 +45,7 @@ export const SCREENS: ScreenSpec[] = [
 		id: "C-010",
 		name: "홈 · 지도",
 		frame: "홈 지도 & 목록",
-		apis: ["GET /stores/nearby", "GET /holds/active"],
+		apis: ["GET /stores/nearby", "GET /holds/active", "GET/PUT /users/me/location"],
 		probe: "nearbyStores",
 		fields: [
 			{ label: "매장 수", path: "totalStoreCount" },
@@ -54,12 +54,10 @@ export const SCREENS: ScreenSpec[] = [
 			{ label: "좌표", path: "stores[0].latitude" },
 			{ label: "판매중 개수 배지", path: "stores[0].sellableProductCount" },
 		],
-		gaps: [
-			"헤더의 지역명(`망원동`) -- user_locations 를 읽고 쓰는 API 가 없다",
-			"판매중 0개 매장의 회색 `0` 마커 -- 지금은 0개 매장을 응답에서 아예 뺀다",
-		],
+		gaps: ["판매중 0개 매장의 회색 `0` 마커 -- 지금은 0개 매장을 응답에서 아예 뺀다"],
 		notes: [
 			"위치 권한을 거부하면 S-001 이 권한 안내만 띄우고 조회하지 않는다 -- 기본 동네로 대신 조회하는 경로는 없다(2026-09-13 확정)",
+			"헤더의 동네 이름은 /users/me/location 이 오간다. 좌표 → 행정동 변환은 앱이 하고 서버는 이름을 받아 둔다",
 		],
 	},
 	{
@@ -97,8 +95,10 @@ export const SCREENS: ScreenSpec[] = [
 		gaps: [
 			"상품 카드의 `과채류` 배지 -- products.category 는 6종(VEGETABLE/FRUIT/…)뿐이고 소분류가 없다",
 			"지도에서 누른 상점을 목록 맨 위로 올리는 정렬",
-			"`할인율순` -- 화면은 정렬 탭이 셋(거리순·마감임박순·할인율순)인데 서버는 앞의 둘만 받는다",
-			"카테고리 칩의 `유제품` -- products.category 6종에 유제품이 없다(가게 종류에만 DAIRY_EGG 가 있다)",
+		],
+		notes: [
+			"정렬은 셋 다 받는다(거리순·마감임박순·할인율순). 할인율순은 그 매장의 최대 할인으로 매장을 줄 세우고, 카드 안 상품도 같은 기준으로 정렬한다",
+			"카테고리는 칩과 같은 여덟이다(V0022) -- 채소·과일·육류·수산·유제품·베이커리·반찬·기타",
 		],
 	},
 	{
