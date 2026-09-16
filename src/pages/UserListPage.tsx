@@ -1,9 +1,10 @@
-import { useCallback } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchUsers } from "../api/users";
+import { updateStoreStatus } from "../api/stores";
+import { deleteUser, fetchUsers } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
 import { formatDate, formatPhone } from "../lib/format";
-import type { UserRole } from "../types";
+import type { StoreStatus, UserRole, UserSummary } from "../types";
 
 const PAGE_SIZE = 20;
 
@@ -18,19 +19,65 @@ const ROLE_LABEL: Record<UserRole, string> = {
 	OWNER: "판매자",
 };
 
+const STORE_STATUS_LABEL: Record<StoreStatus, string> = {
+	PENDING: "심사 대기",
+	APPROVED: "승인",
+	REJECTED: "반려",
+};
+
+const STORE_STATUS_CLASS: Record<StoreStatus, string> = {
+	PENDING: "tag tag--pending",
+	APPROVED: "tag tag--owner",
+	REJECTED: "tag tag--rejected",
+};
+
 export function UserListPage() {
 	// 필터·페이지를 URL 에 둔다 — 새로고침과 뒤로가기가 그대로 동작하고 링크로 공유된다.
 	const [searchParams, setSearchParams] = useSearchParams();
 	const page = Number(searchParams.get("page") ?? "0");
 	const role = (searchParams.get("role") ?? "") as "" | UserRole;
 
+	// 승인·삭제 뒤 목록을 다시 읽기 위한 신호. useAsync 는 deps 가 바뀔 때만 다시 부른다.
+	const [reloadToken, setReloadToken] = useState(0);
+	const [busyUserId, setBusyUserId] = useState<number | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
 	const users = useAsync(
-		useCallback(
-			() => fetchUsers({ page, size: PAGE_SIZE, role: role || undefined }),
-			[page, role],
-		),
-		[page, role],
+		() => fetchUsers({ page, size: PAGE_SIZE, role: role || undefined }),
+		[page, role, reloadToken],
 	);
+
+	async function run(userId: number, action: () => Promise<void>, failure: string) {
+		setError(null);
+		setBusyUserId(userId);
+		try {
+			await action();
+			setReloadToken((token) => token + 1);
+		} catch (caught) {
+			setError(caught instanceof Error ? caught.message : failure);
+		} finally {
+			setBusyUserId(null);
+		}
+	}
+
+	function changeStoreStatus(user: UserSummary, next: StoreStatus) {
+		if (!user.store) {
+			return;
+		}
+		const storeId = user.store.id;
+		void run(user.id, () => updateStoreStatus(storeId, next), "가게 상태를 바꾸지 못했습니다.");
+	}
+
+	function removeUser(user: UserSummary) {
+		const storeNotice = user.store
+			? `\n가게 「${user.store.name}」와 상품, 그 가게의 찜 기록도 함께 삭제됩니다.`
+			: "";
+		// 되돌릴 수 없는 삭제라 한 번 더 묻는다.
+		if (!window.confirm(`「${user.nickname}」 회원을 삭제할까요?${storeNotice}\n되돌릴 수 없습니다.`)) {
+			return;
+		}
+		void run(user.id, () => deleteUser(user.id), "회원을 삭제하지 못했습니다.");
+	}
 
 	function selectRole(next: "" | UserRole) {
 		const params = new URLSearchParams();
@@ -68,6 +115,7 @@ export function UserListPage() {
 				))}
 			</div>
 
+			{error && <p className="state state--error">{error}</p>}
 			{users.loading && <p className="state">불러오는 중…</p>}
 			{users.error && <p className="state state--error">{users.error.message}</p>}
 
@@ -87,6 +135,8 @@ export function UserListPage() {
 										<th>가입 경로</th>
 										<th>마케팅 수신</th>
 										<th>가입일</th>
+										<th>가게</th>
+										<th>관리</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -107,6 +157,49 @@ export function UserListPage() {
 											<td className="table__muted">{user.oauthProvider ?? "-"}</td>
 											<td className="table__muted">{user.marketingOptIn ? "동의" : "미동의"}</td>
 											<td className="table__muted">{formatDate(user.createdAt)}</td>
+											<td>
+												{user.store ? (
+													<div className="row-actions">
+														<span className={STORE_STATUS_CLASS[user.store.status]}>
+															{STORE_STATUS_LABEL[user.store.status]}
+														</span>
+														{user.store.status === "PENDING" && (
+															<>
+																<button
+																	type="button"
+																	className="button button--small"
+																	disabled={busyUserId === user.id}
+																	onClick={() => changeStoreStatus(user, "APPROVED")}
+																>
+																	승인
+																</button>
+																<button
+																	type="button"
+																	className="button button--small button--danger"
+																	disabled={busyUserId === user.id}
+																	onClick={() => changeStoreStatus(user, "REJECTED")}
+																>
+																	반려
+																</button>
+															</>
+														)}
+													</div>
+												) : (
+													<span className="table__muted">
+														{user.role === "OWNER" ? "가게 미등록" : "-"}
+													</span>
+												)}
+											</td>
+											<td>
+												<button
+													type="button"
+													className="button button--small button--danger"
+													disabled={busyUserId === user.id}
+													onClick={() => removeUser(user)}
+												>
+													삭제
+												</button>
+											</td>
 										</tr>
 									))}
 								</tbody>

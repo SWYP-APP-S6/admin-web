@@ -15,3 +15,7 @@ export function fetchUsers(params: {
 	}
 	return request<PageResponse<UserSummary>>(`/admin/users?${query}`);
 }
+
+export function deleteUser(id: number): Promise<void> {
+	return request<void>(`/admin/users/${id}`, { method: "DELETE" });
+}

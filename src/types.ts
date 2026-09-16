@@ -115,6 +115,12 @@ export interface UserSummary {
 	marketingOptIn: boolean;
 	termsAgreedAt: string;
 	createdAt: string;
+	/** 판매자가 등록한 가게. 소비자이거나 아직 가게를 등록하지 않았으면 null. */
+	store: {
+		id: number;
+		name: string;
+		status: StoreStatus;
+	} | null;
 }
 
 export type StoreStatus = "PENDING" | "APPROVED" | "REJECTED";
