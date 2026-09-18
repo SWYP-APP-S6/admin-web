@@ -500,6 +500,8 @@ export interface OwnerHomeProductCard {
 
 /** O-010. 점주 홈 한 화면을 위한 조합 응답(com.swyp.backend.home). */
 export interface OwnerHome {
+	/** 카운트다운 기준 시각. 단말 시계 대신 이걸 쓴다. */
+	serverTime: string;
 	store: {
 		id: number;
 		name: string;
@@ -556,6 +558,8 @@ export interface OwnerHoldCounts {
 }
 
 export interface OwnerHoldList {
+	/** 남은 시간 계산의 기준 시각. */
+	serverTime: string;
 	counts: OwnerHoldCounts;
 	holds: PageResponse<OwnerHoldSummary>;
 }

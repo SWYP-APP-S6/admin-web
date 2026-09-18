@@ -116,11 +116,9 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		missing: [
 			"`N명은 제품 구매가 불가능해요` 의 **인원 수**는 없다 — 부족분 수량은 issues.shortfallQty·productsShortOfStock 과 카드별 shortfallQty 로 오지만, 그게 몇 명의 찜인지는 세지 않는다",
 		],
-		gaps: [
-			"`곧 방문해요`의 카운트다운 기준 시각이 없다 — 응답에 serverTime 이 없어 단말 시계로 세야 한다(찜 상세에는 있다)",
-		],
 		notes: [
 			"화면 셋(최초접근 · 디폴트 · 리스트)은 hasRegisteredProduct 와 products 의 길이로 갈린다",
+			"`곧 방문해요`의 카운트다운은 응답의 serverTime 을 기준으로 센다 — 단말 시계를 쓰지 않는다",
 			"products 는 **지금 판매중인 것만** 온다(findSellingNowOfStore) — 마감·품절 상품은 빠진다",
 			"상단 `새로운 찜이 생겼어요` 배너의 재료는 있다 — HoldService 가 NEW_HOLD_RECEIVED 알림 행을 만든다(#48). 다만 **새 픽업이 열릴 때만** 보내므로 같은 손님이 이어 담은 건에는 알림이 없다",
 		],
@@ -275,10 +273,11 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "상품명", path: "holds.content[0].items[0].productName" },
 		],
 		gaps: [
-			"목록 응답에 serverTime 이 없다 — 남은 시간을 단말 시계로 세게 된다(상세 응답에는 있다)",
+			"점주 취소 · 손님 취소를 **한 번에 거르는 값이 없다** — 「취소 전체」 탭을 만들려면 CANCELED_BY_OWNER 와 CANCELED_BY_USER 를 따로 불러 합쳐야 한다",
 		],
 		notes: [
 			"소비자의 CANCELED 가 점주에게는 취소 주체로 갈라진다(CANCELED_BY_OWNER / CANCELED_BY_USER)",
+			"남은 시간은 목록 응답의 serverTime 을 기준으로 센다",
 			"피그마의 `픽업불가` 탭은 EXPIRED 로 본다 — 서버에 그 이름의 상태는 없다",
 		],
 	},
@@ -310,25 +309,27 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		id: "O-042",
 		name: "찜 취소하기 (선별 취소)",
 		frame: "찜 현황",
-		apis: [],
+		apis: ["GET /owner/holds/cancel-candidates", "POST /owner/holds/cancel"],
 		probe: "none",
-		missing: [
-			"**취소 대상 목록을 보여줄 API 가 없다** — 선착순 배정과 취소 자체는 `PATCH /stock` 의 cancelOverflow 안에서 일어나므로, 화면이 `어느 찜이 취소되는지`를 미리 체크박스로 보여줄 수 없다",
-		],
 		notes: [
-			"먼저 찜한 순으로 배정하고 넘치는 찜만 취소하는 계산은 서버에 있다(createdAt, id 순) — 없는 것은 그 결과를 **미리 보여주는** 경로뿐이다",
+			"cancel-candidates 가 상품별로 취소 후보를 준다 — products[].holds[] 의 heldOrder · nickname · qty 로 체크박스를 그리고, suggested 가 서버가 먼저 고른 것이다",
+			"실제 취소는 고른 holdIds 를 POST /owner/holds/cancel 로 보낸다(최대 100건) — 응답은 같은 후보 형태라 그대로 다시 그리면 된다",
+			"먼저 찜한 순으로 배정하고 넘치는 찜만 취소하는 계산은 서버에 있다(createdAt, id 순)",
+			"쓰기 API 라 점검에서는 부르지 않는다 — 취소는 되돌릴 수 없다",
 		],
 	},
 	{
 		id: "O-043",
 		name: "취소 안내 미리보기 (Bottom Sheet)",
 		frame: "찜 현황",
-		apis: [],
+		apis: ["GET /owner/holds/cancel-candidates"],
 		probe: "none",
-		missing: [
-			"안내 문구를 미리 보여주는 API 가 없다 — cancelOverflow 가 서버에 하드코딩된 문구로 알림 행을 만든다(`… 재고가 모자라 찜이 취소됐어요. 결제된 금액은 없어요.`)",
+		gaps: [
+			"피그마의 문구는 매장명·연락처가 들어간 SMS 형식이다 — noticeMessage 는 알림 본문에 맞춘 형태라 그대로는 다르다",
 		],
-		notes: ["피그마의 문구는 매장명·연락처가 들어간 SMS 형식이다 — 지금 알림 본문과 형태가 다르다"],
+		notes: [
+			"안내 문구는 cancel-candidates 응답의 noticeMessage 로 미리 받는다 — 같이 오는 productsShortOfStock · suggestedCancelCount 가 바텀시트의 수치다",
+		],
 	},
 
 	{
@@ -346,7 +347,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		],
 		notes: [
 			"알림함 엔드포인트 자체는 소비자·점주 공용이다(REALM_USER 면 열린다)",
-			"점주 앞으로 가는 알림은 NEW_HOLD_RECEIVED 하나다 — 재고 재확인(STOCK_RECONFIRM_REQUEST)은 아직 아무도 만들지 않는다",
+			"점주 앞으로 가는 알림은 NEW_HOLD_RECEIVED 와 재고 재확인(STOCK_RECONFIRM_REQUEST) 둘이다 — 둘 다 HoldService 가 찜이 들어올 때 만든다",
 		],
 	},
 	{
