@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
-import { answerStockReconfirm, fetchOwnerProduct, updateStock } from "../api/owner";
+import {
+	answerStockReconfirm,
+	fetchHoldCancelCandidates,
+	fetchOwnerProduct,
+	updateStock,
+} from "../api/owner";
 import { ErrorNote, Loading, asError, localTimeLabel, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
 import type { OwnerProductDetail } from "../types";
+
+async function cancelCountOf(productId: number, accessToken: string): Promise<number> {
+	const candidates = await fetchHoldCancelCandidates(accessToken);
+	const mine = candidates.products.find((product) => product.productId === productId);
+	return mine?.holds.filter((hold) => hold.suggested).length ?? 0;
+}
 
 interface Props {
 	productId: number;
@@ -29,6 +40,9 @@ export function ProductDetailScreen({
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const [saved, setSaved] = useState(false);
+	const [shortage, setShortage] = useState<{ shortfallQty: number; cancelCount: number } | null>(
+		null,
+	);
 
 	useEffect(() => {
 		let active = true;
@@ -68,7 +82,14 @@ export function ProductDetailScreen({
 		setBusy(true);
 		setError(null);
 		try {
-			apply(await work());
+			const updated = await work();
+			apply(updated);
+			if (updated.shortfallQty > 0) {
+				const cancelCount = await cancelCountOf(productId, accessToken);
+				if (cancelCount > 0) {
+					setShortage({ shortfallQty: updated.shortfallQty, cancelCount });
+				}
+			}
 		} catch (caught) {
 			setError(asError(caught));
 			setConfirming(false);
@@ -123,6 +144,38 @@ export function ProductDetailScreen({
 		);
 	}
 
+	if (shortage) {
+		return (
+			<div className="app-screen">
+				<div className="sheet">
+					<p className="cancel-banner" style={{ background: "none", fontSize: 28, padding: 0 }}>
+						❗
+					</p>
+					<h3 className="app-title" style={{ fontSize: 18 }}>
+						재고가 <span className="owner-accent">{shortage.shortfallQty}개</span> 부족해요.
+					</h3>
+					<p className="app-sub">
+						선착순을 기준으로 {shortage.cancelCount}건의 찜을 취소해야 해요.
+					</p>
+
+					<button
+						className="phone__cta"
+						type="button"
+						onClick={() => {
+							setShortage(null);
+							onPickHoldsToCancel();
+						}}
+					>
+						찜 취소하기
+					</button>
+					<button className="cancel-link" type="button" onClick={() => setShortage(null)}>
+						나중에 하기
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	if (confirming) {
 		return (
 			<div className="app-screen">
@@ -134,43 +187,16 @@ export function ProductDetailScreen({
 						맞나요?
 					</h3>
 					<p className="app-sub">
-						선반에 {stock}개, 그중 {product.heldQty}개는 이미 찜이에요.
+						{stock === 0
+							? "재고가 없으면 손님께 보이지 않아요."
+							: shortfall > 0
+								? "재고가 찜된 수보다 부족해져요."
+								: `선반에 ${stock}개, 그중 ${product.heldQty}개는 이미 찜이에요.`}
 					</p>
 
-					{shortfall > 0 && (
-						<p className="state state--error">
-							재고가 {shortfall}개 부족해요. <strong>수량만 저장하면 찜은 그대로 남습니다</strong> —
-							손님 쪽 카운트다운도 계속 돌아갑니다. 끊으려면 다음 화면에서 취소할 찜을 고르세요.
-						</p>
-					)}
 					{error && <ErrorNote error={error} />}
 
-					{shortfall > 0 ? (
-						<>
-							<button
-								className="phone__cta"
-								type="button"
-								disabled={busy}
-								onClick={() =>
-									run(async () => {
-										const saved = await updateStock(productId, stock, accessToken);
-										onPickHoldsToCancel();
-										return saved;
-									})
-								}
-							>
-								수량 저장하고 취소할 찜 고르기
-							</button>
-							<button
-								className="phone__cta phone__cta--ghost"
-								type="button"
-								disabled={busy}
-								onClick={() => run(() => updateStock(productId, stock, accessToken))}
-							>
-								나중에 하기 (수량만 저장)
-							</button>
-						</>
-					) : (
+					{
 						<div className="owner-sheet__actions">
 							<button
 								className="phone__cta phone__cta--ghost"
@@ -189,7 +215,7 @@ export function ProductDetailScreen({
 								{busy ? "저장 중…" : "네, 맞아요"}
 							</button>
 						</div>
-					)}
+					}
 				</div>
 			</div>
 		);
