@@ -1,8 +1,8 @@
 import { request } from "./client";
 import type {
 	OwnerHoldDetail,
+	OwnerHoldFilter,
 	OwnerHoldList,
-	OwnerHoldStatus,
 	OwnerHome,
 	OwnerProductDetail,
 	OwnerProductFilter,
@@ -130,7 +130,7 @@ export function answerStockReconfirm(
 }
 
 export function fetchOwnerHolds(
-	params: { status?: OwnerHoldStatus | null; page: number; size: number },
+	params: { status?: OwnerHoldFilter | null; page: number; size: number },
 	accessToken: string,
 ): Promise<OwnerHoldList> {
 	const query = new URLSearchParams({

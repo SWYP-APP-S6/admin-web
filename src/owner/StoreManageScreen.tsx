@@ -3,6 +3,7 @@ import { completePickup, fetchOwnerHolds, fetchOwnerProducts } from "../api/owne
 import { ErrorNote, Loading, asError, clockLabel, momentLabel, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
 import type {
+	OwnerHoldFilter,
 	OwnerHoldList,
 	OwnerHoldStatus,
 	OwnerHome,
@@ -32,11 +33,12 @@ const PRODUCT_STATUS_LABEL: Record<string, string> = {
 	CLOSED: "마감",
 };
 
-const FILTERS: { status: OwnerHoldStatus | null; label: string; count: (list: OwnerHoldList) => number }[] = [
+const FILTERS: { status: OwnerHoldFilter | null; label: string; count: (list: OwnerHoldList) => number }[] = [
 	{ status: null, label: "전체", count: (list) => list.counts.all },
 	{ status: "HOLDING", label: "찜 진행중", count: (list) => list.counts.holding },
 	{ status: "COMPLETED", label: "픽업완료", count: (list) => list.counts.completed },
 	{ status: "EXPIRED", label: "픽업불가(만료)", count: (list) => list.counts.expired },
+	{ status: "CANCELED", label: "찜 취소", count: (list) => list.counts.canceled },
 	{ status: "CANCELED_BY_OWNER", label: "점주 취소", count: (list) => list.counts.canceledByOwner },
 	{ status: "CANCELED_BY_USER", label: "손님 취소", count: (list) => list.counts.canceledByUser },
 ];
@@ -76,7 +78,7 @@ export function StoreManageScreen({
 	initialTab = "products",
 }: Props) {
 	const [tab, setTab] = useState<Tab>(initialTab);
-	const [filter, setFilter] = useState<OwnerHoldStatus | null>(null);
+	const [filter, setFilter] = useState<OwnerHoldFilter | null>(null);
 	const [list, setList] = useState<OwnerHoldList | null>(null);
 	const [productFilter, setProductFilter] = useState<OwnerProductFilter | null>(null);
 	const [productPage, setProductPage] = useState(0);
@@ -210,8 +212,12 @@ export function StoreManageScreen({
 								</span>
 								<span className="app-item__meta">
 									남은 수량 {product.availableQty}개 · 방문 예정 {product.activeHoldQty}개
-									{product.shortfallQty > 0 && (
-										<strong> · {product.shortfallQty}개는 내줄 수 없어요</strong>
+									{product.shortfallCustomerCount > 0 && (
+										<strong>
+											{" "}
+											· {product.shortfallCustomerCount}명은 제품 구매가 불가능해요
+											<span className="table__muted"> ({product.shortfallQty}개 부족)</span>
+										</strong>
 									)}
 									{product.reconfirmPending && <span className="phone__tag">재고 재확인</span>}
 								</span>
