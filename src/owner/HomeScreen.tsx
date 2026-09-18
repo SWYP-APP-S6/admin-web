@@ -174,7 +174,8 @@ export function OwnerHomeScreen({
 							</span>
 							{product.shortfallQty > 0 && (
 								<span className="owner-product__warn">
-									❗ 찜이 선반보다 {product.shortfallQty}개 많아요
+									❗ {product.shortfallCustomerCount}명은 제품 구매가 불가능해요 (찜이 선반보다{" "}
+									{product.shortfallQty}개 많아요)
 								</span>
 							)}
 						</span>

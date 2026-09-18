@@ -500,6 +500,8 @@ export interface OwnerHomeProductCard {
 	availableQty: number;
 	activeHoldQty: number;
 	shortfallQty: number;
+	/** 선반이 감당 못 하는 찜의 **임자 수**. 「N명은 제품 구매가 불가능해요」는 이 값이다. */
+	shortfallCustomerCount: number;
 	status: ProductStatus;
 	reconfirmPending: boolean;
 }
@@ -552,6 +554,8 @@ export interface OwnerProductSummary {
 	activeHoldQty: number;
 	/** 찜이 선반보다 많을 때 모자란 수량. **개수이지 사람 수가 아니다.** */
 	shortfallQty: number;
+	/** 선반이 감당 못 하는 찜의 **임자 수**. 「N명은 제품 구매가 불가능해요」는 이 값이다. */
+	shortfallCustomerCount: number;
 	originalPrice: number;
 	salePrice: number;
 	discountRate: number;
@@ -575,6 +579,12 @@ export type OwnerHoldStatus =
 	| "CANCELED_BY_OWNER"
 	| "CANCELED_BY_USER";
 
+/**
+ * 목록을 거를 때 보내는 값. 응답의 `status` 보다 하나 많다 — `CANCELED` 는 **물어볼 수만 있고**
+ * 찜이 그 상태로 돌아오지는 않는다(언제나 주체로 갈려서 온다).
+ */
+export type OwnerHoldFilter = OwnerHoldStatus | "CANCELED";
+
 export interface OwnerHoldSummary {
 	id: number;
 	groupId: number;
@@ -592,6 +602,8 @@ export interface OwnerHoldCounts {
 	holding: number;
 	completed: number;
 	expired: number;
+	/** 점주 취소 + 손님 취소. */
+	canceled: number;
 	canceledByOwner: number;
 	canceledByUser: number;
 }
