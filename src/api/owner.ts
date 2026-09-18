@@ -1,5 +1,6 @@
 import { request } from "./client";
 import type {
+	OwnerHoldCancelCandidates,
 	OwnerHoldDetail,
 	OwnerHoldFilter,
 	OwnerHoldList,
@@ -100,18 +101,41 @@ export function fetchOwnerProduct(
 
 /**
  * O-030 · O-051. 점주가 적는 수는 **선반에 있는 총 수량**이다(찜 포함) -- 손님에게 보여줄
- * availableQty 는 서버가 거기서 찜을 빼 만든다. 찜이 그 수를 넘으면 cancelOverflow 가 먼저
- * 찜한 순으로 재고를 배정하고 넘치는 찜만 취소한다. false 면 수량만 저장되고 찜은 남는다.
+ * availableQty 는 서버가 거기서 찜을 빼 만든다.
+ *
+ * **찜은 건드리지 않는다.** 찜이 선반보다 많으면 그 차이가 shortfallQty 로 남을 뿐이고, 누구의
+ * 찜을 취소할지는 O-042 에서 고른다(`fetchHoldCancelCandidates` → `cancelHolds`).
  */
 export function updateStock(
 	productId: number,
 	stockQty: number,
-	cancelOverflow: boolean,
 	accessToken: string,
 ): Promise<OwnerProductDetail> {
 	return request<OwnerProductDetail>(`/owner/products/${productId}/stock`, {
 		method: "PATCH",
-		body: { stockQty, cancelOverflow },
+		body: { stockQty },
+		accessToken,
+	});
+}
+
+/** O-042 · O-043. 가게 전체에서 선반이 감당 못 하는 찜과, 취소 시 나갈 안내 문구. */
+export function fetchHoldCancelCandidates(
+	accessToken: string,
+): Promise<OwnerHoldCancelCandidates> {
+	return request<OwnerHoldCancelCandidates>("/owner/holds/cancel-candidates", { accessToken });
+}
+
+/**
+ * 고른 찜을 취소한다(최대 100건). 취소된 **손님에게 알림과 푸시가 나간다** -- 이 호출이 없으면
+ * 손님 쪽 카운트다운은 계속 돈다. 응답은 취소 후 남은 후보라 그대로 다시 그리면 된다.
+ */
+export function cancelHolds(
+	holdIds: number[],
+	accessToken: string,
+): Promise<OwnerHoldCancelCandidates> {
+	return request<OwnerHoldCancelCandidates>("/owner/holds/cancel", {
+		method: "POST",
+		body: { holdIds },
 		accessToken,
 	});
 }

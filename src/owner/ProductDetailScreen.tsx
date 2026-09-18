@@ -8,6 +8,7 @@ interface Props {
 	productId: number;
 	accessToken: string;
 	onSaved: () => void;
+	onPickHoldsToCancel: () => void;
 }
 
 /**
@@ -16,7 +17,12 @@ interface Props {
  * 점주가 적는 수는 **선반에 있는 총 수량**이다(찜 포함). 손님에게 보이는 수량은 서버가 거기서
  * 찜을 빼 만들고, 찜이 더 많으면 그 차이가 shortfallQty 로 내려온다 -- 화면이 계산하지 않는다.
  */
-export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) {
+export function ProductDetailScreen({
+	productId,
+	accessToken,
+	onSaved,
+	onPickHoldsToCancel,
+}: Props) {
 	const [product, setProduct] = useState<OwnerProductDetail | null>(null);
 	const [stock, setStock] = useState(0);
 	const [confirming, setConfirming] = useState(false);
@@ -133,8 +139,8 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 
 					{shortfall > 0 && (
 						<p className="state state--error">
-							재고가 {shortfall}개 부족해요. 먼저 찜한 순서대로 배정하고 넘치는 찜을 취소하거나,
-							수량만 저장하고 찜은 그대로 둘 수 있어요.
+							재고가 {shortfall}개 부족해요. <strong>수량만 저장하면 찜은 그대로 남습니다</strong> —
+							손님 쪽 카운트다운도 계속 돌아갑니다. 끊으려면 다음 화면에서 취소할 찜을 고르세요.
 						</p>
 					)}
 					{error && <ErrorNote error={error} />}
@@ -145,15 +151,21 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 								className="phone__cta"
 								type="button"
 								disabled={busy}
-								onClick={() => run(() => updateStock(productId, stock, true, accessToken))}
+								onClick={() =>
+									run(async () => {
+										const saved = await updateStock(productId, stock, accessToken);
+										onPickHoldsToCancel();
+										return saved;
+									})
+								}
 							>
-								찜 취소하고 안내 보내기
+								수량 저장하고 취소할 찜 고르기
 							</button>
 							<button
 								className="phone__cta phone__cta--ghost"
 								type="button"
 								disabled={busy}
-								onClick={() => run(() => updateStock(productId, stock, false, accessToken))}
+								onClick={() => run(() => updateStock(productId, stock, accessToken))}
 							>
 								나중에 하기 (수량만 저장)
 							</button>
@@ -172,7 +184,7 @@ export function ProductDetailScreen({ productId, accessToken, onSaved }: Props) 
 								className="phone__cta"
 								type="button"
 								disabled={busy}
-								onClick={() => run(() => updateStock(productId, stock, false, accessToken))}
+								onClick={() => run(() => updateStock(productId, stock, accessToken))}
 							>
 								{busy ? "저장 중…" : "네, 맞아요"}
 							</button>
