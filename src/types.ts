@@ -506,6 +506,8 @@ export interface OwnerHomeProductCard {
 
 /** O-010. 점주 홈 한 화면을 위한 조합 응답(com.swyp.backend.home). */
 export interface OwnerHome {
+	/** 카운트다운 기준 시각. 단말 시계 대신 이걸 쓴다. */
+	serverTime: string;
 	store: {
 		id: number;
 		name: string;
@@ -530,6 +532,39 @@ export interface OwnerHome {
 	upcomingVisits: OwnerHomeVisit[];
 	/** 지금 판매중인 것만 온다 — 종료 · 품절 상품은 이 목록에 없다. */
 	products: OwnerHomeProductCard[];
+}
+
+/**
+ * O-040-1 「등록된 상품」 탭의 칩. 생략하면 전체다.
+ *
+ * `SOLD_OUT` 은 상태 컬럼이 아니라 **남은 수량 0** 을 묻는다 — 마감된 상품도 담기고, 전량이 찜된
+ * (아직 아무도 안 가져간) 상품도 담긴다. 서버가 모르는 값을 보내면 빈 목록이 아니라 400 이다.
+ */
+export type OwnerProductFilter = "RUNNING_LOW" | "SOLD_OUT";
+
+export interface OwnerProductSummary {
+	id: number;
+	name: string;
+	category: ProductCategory;
+	photoUrl: string;
+	initialQty: number;
+	availableQty: number;
+	activeHoldQty: number;
+	/** 찜이 선반보다 많을 때 모자란 수량. **개수이지 사람 수가 아니다.** */
+	shortfallQty: number;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	pickupEndAt: string;
+	status: ProductStatus;
+	reconfirmPending: boolean;
+	createdAt: string;
+}
+
+/** O-040-1. 홈과 달리 **마감 · 품절된 지난 상품까지** 온다. */
+export interface OwnerProductList {
+	serverTime: string;
+	products: PageResponse<OwnerProductSummary>;
 }
 
 /** 점주가 보는 찜 상태. 소비자의 CANCELED 가 취소 주체로 갈라진다. */
@@ -562,6 +597,8 @@ export interface OwnerHoldCounts {
 }
 
 export interface OwnerHoldList {
+	/** 남은 시간 계산의 기준 시각. */
+	serverTime: string;
 	counts: OwnerHoldCounts;
 	holds: PageResponse<OwnerHoldSummary>;
 }

@@ -5,6 +5,8 @@ import type {
 	OwnerHoldStatus,
 	OwnerHome,
 	OwnerProductDetail,
+	OwnerProductFilter,
+	OwnerProductList,
 	ProductPhoto,
 	ProductPreview,
 	ProductRegisterPayload,
@@ -67,6 +69,26 @@ export function previewProduct(
 		body: payload,
 		accessToken,
 	});
+}
+
+/**
+ * O-040-1 「등록된 상품」 탭. 홈의 판매중 목록과 달리 **마감 · 품절된 지난 상품까지** 온다.
+ *
+ * 정렬은 서버가 정한다(최신순) — `sort` 를 넘겨도 무시되므로 엔티티에 없는 필드로 500 이 날 일은
+ * 없다. `size` 상한은 100 이다.
+ */
+export function fetchOwnerProducts(
+	params: { filter?: OwnerProductFilter | null; page: number; size: number },
+	accessToken: string,
+): Promise<OwnerProductList> {
+	const query = new URLSearchParams({
+		page: String(params.page),
+		size: String(params.size),
+	});
+	if (params.filter) {
+		query.set("filter", params.filter);
+	}
+	return request<OwnerProductList>(`/owner/products?${query}`, { accessToken });
 }
 
 export function fetchOwnerProduct(
