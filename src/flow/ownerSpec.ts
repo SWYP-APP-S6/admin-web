@@ -113,9 +113,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "판매중 · 사진", path: "products[0].photoUrl" },
 			{ label: "판매중 · 남은 수량", path: "products[0].availableQty" },
 			{ label: "판매중 · 방문 예정 수량", path: "products[0].activeHoldQty" },
-		],
-		missing: [
-			"`N명은 제품 구매가 불가능해요` 의 **인원 수**는 없다 — 부족분 수량은 issues.shortfallQty·productsShortOfStock 과 카드별 shortfallQty 로 오지만, 그게 몇 명의 찜인지는 세지 않는다",
+			{ label: "판매중 · 못 받는 손님 수", path: "products[0].shortfallCustomerCount" },
 		],
 		notes: [
 			"화면 셋(최초접근 · 디폴트 · 리스트)은 hasRegisteredProduct 와 products 의 길이로 갈린다",
@@ -190,11 +188,9 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "남은 수량", path: "products.content[0].availableQty" },
 			{ label: "방문 예정 수량", path: "products.content[0].activeHoldQty" },
 			{ label: "부족분", path: "products.content[0].shortfallQty" },
+			{ label: "못 받는 손님 수", path: "products.content[0].shortfallCustomerCount" },
 			{ label: "상태", path: "products.content[0].status" },
 			{ label: "등록 시각", path: "products.content[0].createdAt" },
-		],
-		gaps: [
-			"「N명은 제품 구매가 불가능해요」의 **인원 수**는 여기에도 없다 — shortfallQty 는 개수라 한 손님이 2개를 찜했으면 2 다. 명 수는 `GET /owner/holds/cancel-candidates` 가 건별로 준다",
 		],
 		notes: [
 			"홈의 판매중 목록과 달리 **마감 · 품절된 지난 상품까지** 온다 — 「등록된 상품 99」의 개수는 products.totalElements 다",
@@ -202,6 +198,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			"`SOLD_OUT` 은 상태 컬럼이 아니라 **남은 수량 0** 을 묻는다 — 마감돼 status 가 CLOSED 인 상품도, 전량이 찜돼 아직 아무도 안 가져간 상품도 담긴다",
 			"`RUNNING_LOW` 는 마감된 상품과 **픽업 창이 지난 상품**을 뺀다 — 기준 수량은 서버 설정(product.running-low-qty, 기본 3)이다",
 			"정렬은 서버가 정한다(최신순) — sort 를 넘겨도 무시된다. 모르는 filter 값은 빈 목록이 아니라 400 이다",
+			"「N명은 제품 구매가 불가능해요」는 shortfallCustomerCount 다 — shortfallQty 는 개수라 손님 셋이 2개씩 찜하고 선반이 3개면 3(개)과 2(명)로 갈린다",
 		],
 	},
 	{
@@ -277,6 +274,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "진행중", path: "counts.holding" },
 			{ label: "픽업 완료", path: "counts.completed" },
 			{ label: "만료", path: "counts.expired" },
+			{ label: "취소 전체", path: "counts.canceled" },
 			{ label: "점주 취소", path: "counts.canceledByOwner" },
 			{ label: "손님 취소", path: "counts.canceledByUser" },
 			{ label: "총 건수", path: "holds.totalElements" },
@@ -286,11 +284,9 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "만료 시각", path: "holds.content[0].expiresAt" },
 			{ label: "상품명", path: "holds.content[0].items[0].productName" },
 		],
-		gaps: [
-			"점주 취소 · 손님 취소를 **한 번에 거르는 값이 없다** — 「취소 전체」 탭을 만들려면 CANCELED_BY_OWNER 와 CANCELED_BY_USER 를 따로 불러 합쳐야 한다",
-		],
 		notes: [
 			"소비자의 CANCELED 가 점주에게는 취소 주체로 갈라진다(CANCELED_BY_OWNER / CANCELED_BY_USER)",
+			"status 는 여섯 값을 받지만 응답의 status 는 다섯이다 — CANCELED 는 물어볼 수만 있고 찜이 그 상태로 돌아오지는 않는다",
 			"남은 시간은 목록 응답의 serverTime 을 기준으로 센다",
 			"피그마의 `픽업불가` 탭은 EXPIRED 로 본다 — 서버에 그 이름의 상태는 없다",
 		],
