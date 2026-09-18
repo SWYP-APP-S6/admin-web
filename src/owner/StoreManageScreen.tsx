@@ -15,10 +15,13 @@ type Tab = "products" | "holds";
 
 const PRODUCT_PAGE_SIZE = 20;
 
-const PRODUCT_FILTERS: { filter: OwnerProductFilter | null; label: string }[] = [
-	{ filter: null, label: "전체" },
+/** 서버 탭과 하나씩 맞는다. 판매중 · 판매완료 · 마감은 겹치지 않고, 품절 임박은 판매중의 일부다. */
+const PRODUCT_FILTERS: { filter: OwnerProductFilter; label: string }[] = [
+	{ filter: "ALL", label: "전체" },
+	{ filter: "ON_SALE", label: "판매중" },
 	{ filter: "RUNNING_LOW", label: "품절 임박" },
 	{ filter: "SOLD_OUT", label: "판매완료" },
+	{ filter: "CLOSED", label: "마감" },
 ];
 
 const PRODUCT_STATUS_TAG: Record<string, string> = {
@@ -79,7 +82,7 @@ export function StoreManageScreen({
 	const [tab, setTab] = useState<Tab>(initialTab);
 	const [filter, setFilter] = useState<OwnerHoldFilter | null>(null);
 	const [list, setList] = useState<OwnerHoldList | null>(null);
-	const [productFilter, setProductFilter] = useState<OwnerProductFilter | null>(null);
+	const [productFilter, setProductFilter] = useState<OwnerProductFilter>("ALL");
 	const [productPage, setProductPage] = useState(0);
 	const [products, setProducts] = useState<OwnerProductList | null>(null);
 	const [productError, setProductError] = useState<Error | null>(null);
@@ -249,9 +252,9 @@ export function StoreManageScreen({
 					)}
 
 					<p className="app-hint">
-						홈의 판매중 목록과 달리 <strong>마감 · 품절된 지난 상품까지</strong> 옵니다.
-						「판매완료」는 상태가 아니라 <code>availableQty = 0</code> 이라, 마감된 상품도 전량이
-						찜된 상품도 담깁니다.
+						홈의 판매중 목록과 달리 <strong>마감된 지난 상품까지</strong> 옵니다. 판매중 · 판매완료 ·
+						마감은 겹치지 않고, 픽업 마감이 지나면 그 순간 마감으로 넘어갑니다. 품절 임박은 판매중 중
+						남은 수량이 적은 상품입니다.
 					</p>
 				</>
 			)}
