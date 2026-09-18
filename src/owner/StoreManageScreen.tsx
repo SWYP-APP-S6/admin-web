@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { completePickup, fetchOwnerHolds, fetchOwnerProducts } from "../api/owner";
+import {
+	completePickup,
+	fetchHoldCancelCandidates,
+	fetchOwnerHolds,
+	fetchOwnerProducts,
+} from "../api/owner";
 import { ErrorNote, Loading, asError, clockLabel, momentLabel, won } from "../app/shared";
 import { PRODUCT_CATEGORY_LABEL } from "./session";
 import type {
@@ -15,10 +20,13 @@ type Tab = "products" | "holds";
 
 const PRODUCT_PAGE_SIZE = 20;
 
-const PRODUCT_FILTERS: { filter: OwnerProductFilter | null; label: string }[] = [
-	{ filter: null, label: "전체" },
+/** 서버 탭과 하나씩 맞는다. 판매중 · 판매완료 · 마감은 겹치지 않고, 품절 임박은 판매중의 일부다. */
+const PRODUCT_FILTERS: { filter: OwnerProductFilter; label: string }[] = [
+	{ filter: "ALL", label: "전체" },
+	{ filter: "ON_SALE", label: "판매중" },
 	{ filter: "RUNNING_LOW", label: "품절 임박" },
 	{ filter: "SOLD_OUT", label: "판매완료" },
+	{ filter: "CLOSED", label: "마감" },
 ];
 
 const PRODUCT_STATUS_TAG: Record<string, string> = {
@@ -63,6 +71,7 @@ interface Props {
 	accessToken: string;
 	onOpenProduct: (productId: number) => void;
 	onOpenHold: (holdId: number) => void;
+	onPickHoldsToCancel: () => void;
 	onChanged: () => void;
 	initialTab?: Tab;
 }
@@ -73,13 +82,16 @@ export function StoreManageScreen({
 	accessToken,
 	onOpenProduct,
 	onOpenHold,
+	onPickHoldsToCancel,
 	onChanged,
 	initialTab = "products",
 }: Props) {
 	const [tab, setTab] = useState<Tab>(initialTab);
 	const [filter, setFilter] = useState<OwnerHoldFilter | null>(null);
 	const [list, setList] = useState<OwnerHoldList | null>(null);
-	const [productFilter, setProductFilter] = useState<OwnerProductFilter | null>(null);
+	const [productFilter, setProductFilter] = useState<OwnerProductFilter>("ALL");
+	// 가게 전체 기준이라 목록 페이지 · 탭과 따로 받는다(상품 카드 숫자를 더하면 다음 페이지가 빠진다).
+	const [cancelNeeded, setCancelNeeded] = useState(0);
 	const [productPage, setProductPage] = useState(0);
 	const [products, setProducts] = useState<OwnerProductList | null>(null);
 	const [productError, setProductError] = useState<Error | null>(null);
@@ -107,6 +119,12 @@ export function StoreManageScreen({
 			setProductError(null);
 		} catch (caught) {
 			setProductError(asError(caught));
+		}
+		try {
+			setCancelNeeded((await fetchHoldCancelCandidates(accessToken)).suggestedCancelCount);
+		} catch {
+			// 띠를 못 그려도 목록은 보여준다.
+			setCancelNeeded(0);
 		}
 	}, [accessToken, productFilter, productPage]);
 
@@ -211,15 +229,13 @@ export function StoreManageScreen({
 								</span>
 								<span className="app-item__meta">
 									남은 수량 {product.availableQty}개 · 방문 예정 {product.activeHoldQty}개
-									{product.shortfallCustomerCount > 0 && (
-										<strong>
-											{" "}
-											· {product.shortfallCustomerCount}명은 제품 구매가 불가능해요
-											<span className="table__muted"> ({product.shortfallQty}개 부족)</span>
-										</strong>
-									)}
 									{product.reconfirmPending && <span className="phone__tag">재고 재확인</span>}
 								</span>
+								{product.shortfallCustomerCount > 0 && (
+									<span className="owner-shortfall">
+										❗ {product.shortfallCustomerCount}명은 제품 구매가 불가능해요
+									</span>
+								)}
 							</span>
 						</button>
 					))}
@@ -249,11 +265,21 @@ export function StoreManageScreen({
 					)}
 
 					<p className="app-hint">
-						홈의 판매중 목록과 달리 <strong>마감 · 품절된 지난 상품까지</strong> 옵니다.
-						「판매완료」는 상태가 아니라 <code>availableQty = 0</code> 이라, 마감된 상품도 전량이
-						찜된 상품도 담깁니다.
+						홈의 판매중 목록과 달리 <strong>마감된 지난 상품까지</strong> 옵니다. 판매중 · 판매완료 ·
+						마감은 겹치지 않고, 픽업 마감이 지나면 그 순간 마감으로 넘어갑니다. 품절 임박은 판매중 중
+						남은 수량이 적은 상품입니다. 아래 띠의 건수는 탭 · 페이지와 무관하게 가게 전체
+						기준입니다(<code>GET /owner/holds/cancel-candidates</code>).
 					</p>
 				</>
+			)}
+
+			{tab === "products" && cancelNeeded > 0 && (
+				<div className="owner-cancel-bar" role="status">
+					<span>❗ 취소가 필요한 찜이 {cancelNeeded}건 있어요.</span>
+					<button type="button" onClick={onPickHoldsToCancel}>
+						취소하기
+					</button>
+				</div>
 			)}
 
 			{tab === "holds" && (

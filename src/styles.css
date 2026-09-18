@@ -1895,6 +1895,41 @@ button.app-item:hover {
 	color: var(--danger);
 }
 
+.owner-shortfall {
+	display: block;
+	margin-top: 8px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: #fdecec;
+	color: var(--danger);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.owner-cancel-bar {
+	position: sticky;
+	bottom: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 12px;
+	padding: 14px 16px;
+	border-radius: 12px;
+	background: #222;
+	color: #fff;
+	font-size: 14px;
+}
+
+.owner-cancel-bar button {
+	border: none;
+	background: none;
+	color: #fff;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
 .owner-photos {
 	display: flex;
 	gap: 6px;

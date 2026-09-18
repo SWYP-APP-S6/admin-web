@@ -149,7 +149,7 @@ export function HoldCancelScreen({ accessToken, onChanged }: Props) {
 				취소 예정 <span className="owner-accent">{picked.size}건</span>
 			</p>
 			<p className="app-sub" style={{ margin: "4px 0 0" }}>
-				먼저 찜한 순서대로 재고를 배정해요.
+				남은 수량을 가장 많이 팔 수 있게 배정해요.
 			</p>
 
 			{candidates?.products.length === 0 && (
@@ -194,8 +194,9 @@ export function HoldCancelScreen({ accessToken, onChanged }: Props) {
 			</button>
 
 			<p className="app-hint">
-				체크는 서버가 먼저 골라 둔 것입니다 — 선반을 <strong>먼저 찜한 순서대로</strong> 배정하고
-				남는 찜이라, 먼저 찜한 손님이 지켜집니다. 바꿔서 고르셔도 됩니다.
+				체크는 서버가 먼저 골라 둔 것입니다 — 남은 수량을 <strong>가장 많이 팔 수 있게</strong>
+				배정하고 남는 찜이며, 팔리는 개수가 같으면 먼저 찜한 손님이 지켜집니다. 바꿔서 고르셔도
+				됩니다.
 			</p>
 		</div>
 	);

@@ -540,7 +540,7 @@ export interface OwnerHome {
  * `SOLD_OUT` 은 상태 컬럼이 아니라 **남은 수량 0** 을 묻는다 — 마감된 상품도 담기고, 전량이 찜된
  * (아직 아무도 안 가져간) 상품도 담긴다. 서버가 모르는 값을 보내면 빈 목록이 아니라 400 이다.
  */
-export type OwnerProductFilter = "RUNNING_LOW" | "SOLD_OUT";
+export type OwnerProductFilter = "ALL" | "ON_SALE" | "RUNNING_LOW" | "SOLD_OUT" | "CLOSED";
 
 export interface OwnerProductSummary {
 	id: number;

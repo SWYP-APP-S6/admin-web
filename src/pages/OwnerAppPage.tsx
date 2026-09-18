@@ -229,6 +229,7 @@ export function OwnerAppPage() {
 						initialTab="holds"
 						onOpenProduct={(productId) => push({ name: "product", productId })}
 						onOpenHold={(holdId) => push({ name: "hold", holdId })}
+						onPickHoldsToCancel={() => setStack((stack) => [...stack, { name: "holdCancel" }])}
 						onChanged={() => void reload()}
 					/>
 				)}
