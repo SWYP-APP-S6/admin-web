@@ -278,7 +278,7 @@ export function ProductDetailScreen({
 				<button
 					className="stepper__button"
 					type="button"
-					disabled={!product.stockEditable || stock <= product.minAdjustableQty}
+					disabled={!product.stockEditable || stock <= 0}
 					onClick={() => setStock((current) => current - 1)}
 				>
 					−
@@ -298,12 +298,6 @@ export function ProductDetailScreen({
 				<p className="owner-warn">
 					⚠️ 수량이 맞다고 확인했거나 마감된 상품이라 지금은 고칠 수 없습니다(픽업 마감이 지나면
 					다시 열립니다).
-				</p>
-			)}
-			{product.stockEditable && product.minAdjustableQty > 0 && (
-				<p className="app-hint">
-					재고 재확인 전에는 <strong>{product.minAdjustableQty}개</strong> 아래로 내릴 수 없습니다
-					(<code>QTY_BELOW_MINIMUM</code>).
 				</p>
 			)}
 			{shortfall > 0 && (

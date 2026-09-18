@@ -86,7 +86,7 @@ export function OwnerHomeScreen({
 				<div className="owner-stat owner-stat--green">
 					<span className="owner-stat__icon">🥬</span>
 					<span className="owner-stat__label">판매중</span>
-					<strong>{home.summary.onSaleQty}개</strong>
+					<strong>{home.summary.onSaleProductCount}개</strong>
 				</div>
 			</div>
 
