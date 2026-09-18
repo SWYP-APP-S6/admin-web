@@ -5,6 +5,7 @@ import {
 	fetchOwnerHold,
 	fetchOwnerHolds,
 	fetchOwnerHome,
+	fetchHoldCancelCandidates,
 	fetchOwnerProduct,
 	fetchOwnerProducts,
 } from "../api/owner";
@@ -90,6 +91,8 @@ export async function runOwner(
 					status: "ok",
 					payload: await fetchOwnerProducts({ page: 0, size: 10 }, probe.accessToken),
 				};
+			case "holdCancelCandidates":
+				return { status: "ok", payload: await fetchHoldCancelCandidates(probe.accessToken) };
 			case "ownerHolds":
 				return {
 					status: "ok",
