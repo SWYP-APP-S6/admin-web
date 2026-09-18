@@ -1,6 +1,13 @@
 import { issueTestToken } from "../api/devToken";
 import { fetchNotifications } from "../api/notifications";
-import { fetchMyStore, fetchOwnerHold, fetchOwnerHolds, fetchOwnerHome, fetchOwnerProduct } from "../api/owner";
+import {
+	fetchMyStore,
+	fetchOwnerHold,
+	fetchOwnerHolds,
+	fetchOwnerHome,
+	fetchOwnerProduct,
+	fetchOwnerProducts,
+} from "../api/owner";
 import { ApiError } from "../api/client";
 import type { OwnerScreenSpec } from "./ownerSpec";
 
@@ -77,6 +84,11 @@ export async function runOwner(
 				return {
 					status: "ok",
 					payload: await fetchOwnerProduct(probe.productId, probe.accessToken),
+				};
+			case "ownerProducts":
+				return {
+					status: "ok",
+					payload: await fetchOwnerProducts({ page: 0, size: 10 }, probe.accessToken),
 				};
 			case "ownerHolds":
 				return {

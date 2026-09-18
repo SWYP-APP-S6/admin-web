@@ -12,6 +12,7 @@ export type OwnerProbe =
 	| "myStore"
 	| "ownerHome"
 	| "ownerProduct"
+	| "ownerProducts"
 	| "ownerHolds"
 	| "ownerHoldDetail"
 	| "notifications"
@@ -178,16 +179,29 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		id: "O-040-1",
 		name: "점포 관리 · 등록된 상품",
 		frame: "상품 관리",
-		apis: ["GET /owner/home (대체)"],
-		probe: "ownerHome",
+		apis: ["GET /owner/products?filter=&page=&size="],
+		probe: "ownerProducts",
 		fields: [
-			{ label: "상품 이름", path: "products[0].name" },
-			{ label: "판매가", path: "products[0].salePrice" },
-			{ label: "남은 수량", path: "products[0].availableQty" },
-			{ label: "방문 예정 수량", path: "products[0].activeHoldQty" },
+			{ label: "기준 시각", path: "serverTime" },
+			{ label: "해당 상품 수", path: "products.totalElements" },
+			{ label: "상품 이름", path: "products.content[0].name" },
+			{ label: "판매가", path: "products.content[0].salePrice" },
+			{ label: "처음 등록 수량", path: "products.content[0].initialQty" },
+			{ label: "남은 수량", path: "products.content[0].availableQty" },
+			{ label: "방문 예정 수량", path: "products.content[0].activeHoldQty" },
+			{ label: "부족분", path: "products.content[0].shortfallQty" },
+			{ label: "상태", path: "products.content[0].status" },
+			{ label: "등록 시각", path: "products.content[0].createdAt" },
 		],
-		missing: [
-			"`GET /owner/products`(내 상품 목록 · 페이지네이션)가 없다 — 홈의 판매중 목록으로 대신하고 있어 마감·품절된 지난 상품은 어디서도 볼 수 없다(피그마의 `등록된 상품 99` 탭)",
+		gaps: [
+			"「N명은 제품 구매가 불가능해요」의 **인원 수**는 여기에도 없다 — shortfallQty 는 개수라 한 손님이 2개를 찜했으면 2 다. 명 수는 `GET /owner/holds/cancel-candidates` 가 건별로 준다",
+		],
+		notes: [
+			"홈의 판매중 목록과 달리 **마감 · 품절된 지난 상품까지** 온다 — 「등록된 상품 99」의 개수는 products.totalElements 다",
+			"칩은 filter 하나로 갈린다 — 없으면 전체, RUNNING_LOW 는 품절 임박, SOLD_OUT 은 판매완료",
+			"`SOLD_OUT` 은 상태 컬럼이 아니라 **남은 수량 0** 을 묻는다 — 마감돼 status 가 CLOSED 인 상품도, 전량이 찜돼 아직 아무도 안 가져간 상품도 담긴다",
+			"`RUNNING_LOW` 는 마감된 상품과 **픽업 창이 지난 상품**을 뺀다 — 기준 수량은 서버 설정(product.running-low-qty, 기본 3)이다",
+			"정렬은 서버가 정한다(최신순) — sort 를 넘겨도 무시된다. 모르는 filter 값은 빈 목록이 아니라 400 이다",
 		],
 	},
 	{
