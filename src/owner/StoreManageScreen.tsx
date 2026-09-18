@@ -36,11 +36,10 @@ const PRODUCT_STATUS_LABEL: Record<string, string> = {
 const FILTERS: { status: OwnerHoldFilter | null; label: string; count: (list: OwnerHoldList) => number }[] = [
 	{ status: null, label: "전체", count: (list) => list.counts.all },
 	{ status: "HOLDING", label: "찜 진행중", count: (list) => list.counts.holding },
-	{ status: "COMPLETED", label: "픽업완료", count: (list) => list.counts.completed },
-	{ status: "EXPIRED", label: "픽업불가(만료)", count: (list) => list.counts.expired },
-	{ status: "CANCELED", label: "찜 취소", count: (list) => list.counts.canceled },
-	{ status: "CANCELED_BY_OWNER", label: "점주 취소", count: (list) => list.counts.canceledByOwner },
-	{ status: "CANCELED_BY_USER", label: "손님 취소", count: (list) => list.counts.canceledByUser },
+	{ status: "COMPLETED", label: "픽업 완료", count: (list) => list.counts.completed },
+	{ status: "CANCELED_BY_OWNER", label: "픽업불가", count: (list) => list.counts.canceledByOwner },
+	{ status: "CANCELED_BY_USER", label: "찜 취소", count: (list) => list.counts.canceledByUser },
+	{ status: "EXPIRED", label: "만료된 찜", count: (list) => list.counts.expired },
 ];
 
 const STATUS_TAG: Record<OwnerHoldStatus, string> = {
@@ -54,9 +53,9 @@ const STATUS_TAG: Record<OwnerHoldStatus, string> = {
 const STATUS_LABEL: Record<OwnerHoldStatus, string> = {
 	HOLDING: "찜 진행중",
 	COMPLETED: "픽업 완료",
-	EXPIRED: "만료",
-	CANCELED_BY_OWNER: "점주 취소",
-	CANCELED_BY_USER: "손님 취소",
+	EXPIRED: "만료된 찜",
+	CANCELED_BY_OWNER: "픽업불가",
+	CANCELED_BY_USER: "찜 취소",
 };
 
 interface Props {
