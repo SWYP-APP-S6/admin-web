@@ -471,8 +471,6 @@ export interface OwnerProductDetail {
 	reconfirmAnsweredAt: string | null;
 	/** 재고 재확인 모달(O-050)을 띄워야 하는지. 보낸 뒤 아직 답하지 않은 상태. */
 	reconfirmPending: boolean;
-	/** 수량 스테퍼의 하한. 재확인 전에는 최초 등록의 일부, 그 뒤로는 0. */
-	minAdjustableQty: number;
 	/** 「네, 맞아요」로 확정한 상품은 픽업 마감까지 못 고친다. 마감된 상품도 false. */
 	stockEditable: boolean;
 	activeHoldQty: number;

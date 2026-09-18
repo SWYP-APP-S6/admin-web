@@ -221,7 +221,6 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 			{ label: "상태", path: "status" },
 			{ label: "선반 총 수량", path: "stockQty" },
 			{ label: "부족분", path: "shortfallQty" },
-			{ label: "스테퍼 하한", path: "minAdjustableQty" },
 			{ label: "수정 가능", path: "stockEditable" },
 			{ label: "재확인 대기", path: "reconfirmPending" },
 			{ label: "식자재 태그", path: "ingredientTags[0]", optional: true },
