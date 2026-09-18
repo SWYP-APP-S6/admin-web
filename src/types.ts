@@ -517,7 +517,7 @@ export interface OwnerHome {
 	summary: {
 		upcomingVisitCount: number;
 		completedTodayCount: number;
-		onSaleQty: number;
+		onSaleProductCount: number;
 	};
 	issues: {
 		expiredTodayCount: number;
