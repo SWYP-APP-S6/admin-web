@@ -1994,3 +1994,66 @@ button.app-item:hover {
 	color: var(--danger);
 	line-height: 1.5;
 }
+
+/* O-042 찜 취소하기 -- 상품별로 묶고, 고른 찜에 색을 준다. */
+.cancel-banner {
+	background: #fdecec;
+	border-radius: 12px;
+	color: #c0392b;
+	font-weight: 700;
+	line-height: 1.5;
+	margin: 0 0 20px;
+	padding: 18px 16px;
+	text-align: center;
+}
+
+.cancel-count {
+	font-size: 16px;
+	font-weight: 700;
+	margin: 0;
+}
+
+.cancel-group {
+	margin-top: 20px;
+}
+
+.cancel-group__name {
+	font-size: 15px;
+	font-weight: 700;
+	margin: 0 0 10px;
+}
+
+.cancel-row {
+	align-items: flex-start;
+	background: #f6f6f7;
+	border-radius: 12px;
+	cursor: pointer;
+	display: flex;
+	gap: 10px;
+	margin-bottom: 8px;
+	padding: 12px 14px;
+}
+
+.cancel-row--picked {
+	background: #fff3ec;
+}
+
+.cancel-row__order {
+	color: #8b8b8f;
+	font-size: 12px;
+}
+
+.cancel-row__who {
+	font-weight: 700;
+}
+
+.cancel-link {
+	background: none;
+	border: 0;
+	color: #8b8b8f;
+	cursor: pointer;
+	display: block;
+	font-size: 14px;
+	margin: 12px auto 0;
+	text-decoration: underline;
+}

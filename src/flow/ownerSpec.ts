@@ -14,6 +14,7 @@ export type OwnerProbe =
 	| "ownerProduct"
 	| "ownerProducts"
 	| "ownerHolds"
+	| "holdCancelCandidates"
 	| "ownerHoldDetail"
 	| "notifications"
 	| "none";
@@ -241,8 +242,8 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		apis: ["PATCH /owner/products/{id}/available-qty"],
 		probe: "none",
 		notes: [
-			"찜이 적은 수량을 넘으면 `cancelOverflow` 가 정한다 — true 면 **먼저 찜한 순으로 배정하고 넘치는 찜만** 취소하며 손님에게 알림 행을 만들고, false 면 수량만 저장되고 찜은 남는다(BR-015)",
-			"선반을 0 으로 내리면서 cancelOverflow 를 켜는 것이 예전 CANCEL_ALL 이다",
+			"**수량 저장은 찜을 건드리지 않는다** — 찜이 선반보다 많으면 그 차이가 shortfallQty 로 남을 뿐이고, 손님 쪽 찜과 카운트다운은 그대로 돈다",
+			"누구의 찜을 끊을지는 O-042 에서 고른다 — 손님에게 알림이 나가는 것도 그 호출뿐이다(BR-015)",
 			"점검이 실제로 수량을 바꾸지는 않는다 — 재고가 움직인다. /owner 에서 눌러 확인한다",
 		],
 	},
@@ -320,12 +321,21 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		name: "찜 취소하기 (선별 취소)",
 		frame: "찜 현황",
 		apis: ["GET /owner/holds/cancel-candidates", "POST /owner/holds/cancel"],
-		probe: "none",
+		probe: "holdCancelCandidates",
+		fields: [
+			{ label: "부족한 상품 수", path: "productsShortOfStock" },
+			{ label: "서버가 고른 취소 건수", path: "suggestedCancelCount" },
+			{ label: "안내 문구", path: "noticeMessage" },
+			{ label: "상품명", path: "products[0].productName", optional: true },
+			{ label: "후보 · 닉네임", path: "products[0].holds[0].nickname", optional: true },
+			{ label: "후보 · 먼저 찜한 순서", path: "products[0].holds[0].heldOrder", optional: true },
+		],
 		notes: [
 			"cancel-candidates 가 상품별로 취소 후보를 준다 — products[].holds[] 의 heldOrder · nickname · qty 로 체크박스를 그리고, suggested 가 서버가 먼저 고른 것이다",
 			"실제 취소는 고른 holdIds 를 POST /owner/holds/cancel 로 보낸다(최대 100건) — 응답은 같은 후보 형태라 그대로 다시 그리면 된다",
 			"먼저 찜한 순으로 배정하고 넘치는 찜만 취소하는 계산은 서버에 있다(createdAt, id 순)",
-			"쓰기 API 라 점검에서는 부르지 않는다 — 취소는 되돌릴 수 없다",
+			"후보 조회는 읽기라 점검에서 부른다. 실제 취소(POST)는 되돌릴 수 없어 부르지 않는다",
+			"**수량 저장(O-051)만으로는 찜이 끊기지 않는다** — 이 화면까지 와야 손님의 찜이 끝나고 알림이 나간다",
 		],
 	},
 	{
@@ -333,7 +343,7 @@ export const OWNER_SCREENS: OwnerScreenSpec[] = [
 		name: "취소 안내 미리보기 (Bottom Sheet)",
 		frame: "찜 현황",
 		apis: ["GET /owner/holds/cancel-candidates"],
-		probe: "none",
+		probe: "holdCancelCandidates",
 		gaps: [
 			"피그마의 문구는 매장명·연락처가 들어간 SMS 형식이다 — noticeMessage 는 알림 본문에 맞춘 형태라 그대로는 다르다",
 		],

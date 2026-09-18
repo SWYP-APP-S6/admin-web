@@ -597,6 +597,39 @@ export interface OwnerHoldSummary {
 	expiresAt: string;
 }
 
+/** O-042. 선반이 감당 못 하는 찜 중 **어느 것을 취소할지** 고르기 위한 목록. */
+export interface OwnerHoldCancelCandidates {
+	/** 재고가 부족한 상품의 수. */
+	productsShortOfStock: number;
+	/** 서버가 먼저 골라 둔(`suggested`) 찜의 수. */
+	suggestedCancelCount: number;
+	/** O-043 바텀시트에 그대로 보여줄 안내 문구. 취소된 손님에게 가는 알림 본문과 같다. */
+	noticeMessage: string;
+	products: OwnerHoldCancelProduct[];
+}
+
+export interface OwnerHoldCancelProduct {
+	productId: number;
+	productName: string;
+	stockQty: number;
+	heldQty: number;
+	shortfallQty: number;
+	/** 늦게 찜한 순서로 온다 — 먼저 찜한 사람을 지키기 때문이다. */
+	holds: OwnerHoldCancelCandidate[];
+}
+
+export interface OwnerHoldCancelCandidate {
+	holdId: number;
+	/** 이 상품을 몇 번째로 찜했는지(1부터). */
+	heldOrder: number;
+	heldAt: string;
+	nickname: string;
+	qty: number;
+	lineTotal: number;
+	/** 서버가 먼저 고른 것. 선반에 배정하고 남는 찜이다. */
+	suggested: boolean;
+}
+
 export interface OwnerHoldCounts {
 	all: number;
 	holding: number;

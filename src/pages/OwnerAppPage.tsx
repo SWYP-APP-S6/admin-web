@@ -5,6 +5,7 @@ import { fetchMyStore, fetchOwnerHome } from "../api/owner";
 import { InboxScreen } from "../app/InboxScreen";
 import { ErrorNote, Loading, asError, codeOf } from "../app/shared";
 import { OwnerHomeScreen } from "../owner/HomeScreen";
+import { HoldCancelScreen } from "../owner/HoldCancelScreen";
 import { OwnerHoldDetailScreen } from "../owner/HoldDetailScreen";
 import { LoginScreen } from "../owner/LoginScreen";
 import { ProductDetailScreen } from "../owner/ProductDetailScreen";
@@ -23,7 +24,8 @@ type Route =
 	| { name: "inbox" }
 	| { name: "productRegister" }
 	| { name: "product"; productId: number }
-	| { name: "hold"; holdId: number };
+	| { name: "hold"; holdId: number }
+	| { name: "holdCancel" };
 
 const TABS: { tab: Tab; label: string }[] = [
 	{ tab: "home", label: "홈" },
@@ -260,7 +262,12 @@ export function OwnerAppPage() {
 						productId={current.productId}
 						accessToken={token}
 						onSaved={() => void reload()}
+						onPickHoldsToCancel={() => setStack((stack) => [...stack, { name: "holdCancel" }])}
 					/>
+				)}
+
+				{token && current.name === "holdCancel" && (
+					<HoldCancelScreen accessToken={token} onChanged={() => void reload()} />
 				)}
 
 				{token && current.name === "hold" && (
