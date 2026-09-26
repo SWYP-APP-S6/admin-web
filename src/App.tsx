@@ -7,6 +7,7 @@ import { EventListPage } from "./pages/EventListPage";
 import { HoldListPage } from "./pages/HoldListPage";
 import { FlowCheckPage } from "./pages/FlowCheckPage";
 import { LoginPage } from "./pages/LoginPage";
+import { NotificationListPage } from "./pages/NotificationListPage";
 import { OwnerAppPage } from "./pages/OwnerAppPage";
 import { OwnerFlowCheckPage } from "./pages/OwnerFlowCheckPage";
 import { PasswordPage } from "./pages/PasswordPage";
@@ -54,6 +55,7 @@ export default function App() {
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/products" element={<ProductListPage />} />
 						<Route path="/holds" element={<HoldListPage />} />
+						<Route path="/notifications" element={<NotificationListPage />} />
 						<Route path="/events" element={<EventListPage />} />
 						<Route path="/app" element={<ConsumerAppPage />} />
 						<Route path="/flow" element={<FlowCheckPage />} />

@@ -185,6 +185,39 @@ export interface AdminUserDetail {
 	termsAgreements: { type: TermsType; version: number; title: string; agreedAt: string }[];
 }
 
+export type AdminNotificationType = NotificationType | "STORE_APPROVED" | "STORE_REJECTED";
+
+/** GET /admin/notifications 의 한 줄. */
+export interface AdminNotification {
+	id: number;
+	user: { id: number; nickname: string };
+	type: AdminNotificationType;
+	title: string;
+	body: string;
+	deepLink: string | null;
+	readAt: string | null;
+	pushState: PushState;
+	pushAttempts: number;
+	pushedAt: string | null;
+	createdAt: string;
+}
+
+export interface PushStateCounts {
+	pending: number;
+	sent: number;
+	skipped: number;
+	failed: number;
+}
+
+/** GET /admin/notifications/push-summary. pushEnabled 가 false 면 FCM 키가 없어 발송만 꺼진 상태다. */
+export interface PushOutboxSummary {
+	pushEnabled: boolean;
+	allTime: PushStateCounts;
+	last24Hours: PushStateCounts;
+	/** 가장 오래 기다리는 PENDING 의 생성 시각. 배치가 멈추면 이 값이 과거로 남는다. */
+	oldestPendingAt: string | null;
+}
+
 export type AdminProductFilter = "ALL" | "ON_SALE" | "SOLD_OUT" | "CLOSED" | "HIDDEN";
 
 /** 소비자 조회 조건을 뒤집은 것. 하나라도 있으면 소비자 화면에 안 뜬다. */

@@ -2202,3 +2202,24 @@ a.button {
 	margin: 0;
 	padding: 10px 14px;
 }
+
+/* 알림·푸시 */
+.push-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+.push-counts {
+	margin: 0;
+}
+.push-counts__bad {
+	color: #a02620;
+}
+.push-oldest {
+	margin: 0 0 10px;
+	font-size: 13px;
+}
+.filters--form .filters--form {
+	margin: 0;
+}
