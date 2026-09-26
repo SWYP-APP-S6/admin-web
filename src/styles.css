@@ -2163,3 +2163,42 @@ a.button {
 	display: inline-block;
 	text-decoration: none;
 }
+
+/* 회원 상세 */
+.page-head__actions {
+	margin-left: auto;
+}
+.detail-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+.detail-grid__wide {
+	grid-column: 1 / -1;
+}
+.table--compact th,
+.table--compact td {
+	padding: 6px 8px;
+	font-size: 13px;
+}
+.credit-line {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+.credit-line__value {
+	font-size: 20px;
+}
+.credit-delta {
+	color: #1f6f4a;
+	font-weight: 600;
+}
+.credit-delta--down {
+	color: #a02620;
+}
+.facts--flat {
+	margin: 0;
+	padding: 10px 14px;
+}

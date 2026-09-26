@@ -1,5 +1,11 @@
 import { request } from "./client";
-import type { PageResponse, UserRole, UserSummary } from "../types";
+import type {
+	AdminUserDetail,
+	CancelCreditBalance,
+	PageResponse,
+	UserRole,
+	UserSummary,
+} from "../types";
 
 export function fetchUsers(params: {
 	page: number;
@@ -14,6 +20,17 @@ export function fetchUsers(params: {
 		query.set("role", params.role);
 	}
 	return request<PageResponse<UserSummary>>(`/admin/users?${query}`);
+}
+
+export function fetchUser(id: number): Promise<AdminUserDetail> {
+	return request<AdminUserDetail>(`/admin/users/${id}`);
+}
+
+export function adjustCancelCredits(id: number, delta: number): Promise<CancelCreditBalance> {
+	return request<CancelCreditBalance>(`/admin/users/${id}/cancel-credits`, {
+		method: "POST",
+		body: { delta },
+	});
 }
 
 export function deleteUser(id: number): Promise<void> {

@@ -107,6 +107,84 @@ export type DomainEventType =
 	| "PRODUCT_SOLD_OUT"
 	| "STORE_REGISTER";
 
+export type CancelCreditReason = "CANCEL" | "NO_SHOW" | "REFILL" | "GIVE_BACK" | "ADMIN_ADJUST";
+
+export interface CancelCreditBalance {
+	credits: number;
+	max: number;
+	/** 가득 차 있으면 null. */
+	nextRefillAt: string | null;
+}
+
+export type PushState = "PENDING" | "SENT" | "SKIPPED" | "FAILED";
+
+export type TermsType =
+	| "SERVICE"
+	| "PRIVACY_COLLECTION"
+	| "LOCATION"
+	| "THIRD_PARTY"
+	| "MARKETING"
+	| "PRIVACY_POLICY";
+
+/** GET /admin/users/{id}. 문의 대응 한 화면에 필요한 것을 모은다. */
+export interface AdminUserDetail {
+	id: number;
+	role: UserRole;
+	nickname: string;
+	phone: string | null;
+	oauthProvider: string | null;
+	oauthProviderId: string | null;
+	marketingOptIn: boolean;
+	termsAgreedAt: string;
+	createdAt: string;
+	location: {
+		regionName: string;
+		latitude: number;
+		longitude: number;
+		updatedAt: string;
+	} | null;
+	store: { id: number; name: string; status: StoreStatus; createdAt: string } | null;
+	cancelCredits: CancelCreditBalance & {
+		events: {
+			id: number;
+			reason: CancelCreditReason;
+			delta: number;
+			holdId: number | null;
+			createdAt: string;
+		}[];
+	};
+	/** 저장된 상태 기준이라 만료 시각이 지난 HOLDING 도 holding 에 센다. */
+	holds: {
+		holding: number;
+		completed: number;
+		expired: number;
+		canceledByUser: number;
+		canceledByOwner: number;
+	};
+	notifications: {
+		unreadCount: number;
+		recent: {
+			id: number;
+			type: NotificationType | "STORE_APPROVED" | "STORE_REJECTED";
+			title: string;
+			body: string;
+			readAt: string | null;
+			pushState: PushState;
+			pushAttempts: number;
+			pushedAt: string | null;
+			createdAt: string;
+		}[];
+	};
+	deviceTokens: {
+		id: number;
+		platform: DevicePlatform;
+		tokenSuffix: string;
+		lastUsedAt: string;
+		createdAt: string;
+	}[];
+	termsAgreements: { type: TermsType; version: number; title: string; agreedAt: string }[];
+}
+
 export type AdminProductFilter = "ALL" | "ON_SALE" | "SOLD_OUT" | "CLOSED" | "HIDDEN";
 
 /** 소비자 조회 조건을 뒤집은 것. 하나라도 있으면 소비자 화면에 안 뜬다. */

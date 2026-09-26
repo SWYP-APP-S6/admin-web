@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { updateStoreStatus } from "../api/stores";
 import { deleteUser, fetchUsers } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
@@ -142,7 +142,9 @@ export function UserListPage() {
 								<tbody>
 									{users.data.content.map((user) => (
 										<tr key={user.id}>
-											<td>{user.nickname}</td>
+											<td>
+												<Link to={`/users/${user.id}`}>{user.nickname}</Link>
+											</td>
 											<td>
 												<span
 													className={

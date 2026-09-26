@@ -14,6 +14,7 @@ import { ProductListPage } from "./pages/ProductListPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
 import { StoreListPage } from "./pages/StoreListPage";
+import { UserDetailPage } from "./pages/UserDetailPage";
 import { UserListPage } from "./pages/UserListPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -49,6 +50,7 @@ export default function App() {
 						<Route path="/recipes" element={<RecipeListPage />} />
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
+						<Route path="/users/:id" element={<UserDetailPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
 						<Route path="/products" element={<ProductListPage />} />
 						<Route path="/holds" element={<HoldListPage />} />
