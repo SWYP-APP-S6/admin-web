@@ -2098,6 +2098,14 @@ button.app-item:hover {
 	align-items: flex-end;
 	gap: 10px;
 }
+.filters--form .row-actions {
+	align-items: center;
+	padding-bottom: 1px;
+}
+.filters--form .button {
+	white-space: nowrap;
+	height: 38px;
+}
 .field--inline {
 	display: flex;
 	flex-direction: column;
