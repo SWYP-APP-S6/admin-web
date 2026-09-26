@@ -2092,3 +2092,42 @@ button.app-item:hover {
 	margin: 12px auto 0;
 	text-decoration: underline;
 }
+
+/* 행동 로그 */
+.filters--form {
+	align-items: flex-end;
+	gap: 10px;
+}
+.field--inline {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 0;
+}
+.field__input--short {
+	width: 96px;
+}
+.link-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	color: var(--text);
+	cursor: pointer;
+	text-align: left;
+}
+.link-button:hover {
+	text-decoration: underline;
+}
+.table__nowrap {
+	white-space: nowrap;
+}
+.event-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	font-size: 13px;
+}
+.event-details__item {
+	white-space: nowrap;
+}

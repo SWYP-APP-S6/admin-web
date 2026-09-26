@@ -5,6 +5,7 @@ const NAV_ITEMS = [
 	{ to: "/recipes", label: "레시피" },
 	{ to: "/users", label: "유저" },
 	{ to: "/stores", label: "가게" },
+	{ to: "/events", label: "행동 로그" },
 	{ to: "/app", label: "소비자 앱 테스트" },
 	{ to: "/flow", label: "소비자 플로우 점검" },
 	{ to: "/owner", label: "점주 앱 테스트" },

@@ -83,6 +83,44 @@ export interface RecipeDetail {
 
 export type UserRole = "CONSUMER" | "OWNER";
 
+/** 서버가 남기는 행동 로그의 종류(backend DomainEventType). *_VIEW · APP_OPEN 은 앱 몫이라 서버엔 안 쌓인다. */
+export type DomainEventType =
+	| "APP_OPEN"
+	| "PRODUCT_LIST_VIEW"
+	| "PRODUCT_DETAIL_VIEW"
+	| "RECIPE_IMPRESSION"
+	| "HOLD_CREATE"
+	| "HOLD_FAIL"
+	| "NOTIFICATION_PERMISSION_RESULT"
+	| "HOLD_CANCEL"
+	| "HOLD_EXPIRE"
+	| "PICKUP_COMPLETE"
+	| "STOCK_RECONFIRM_TRIGGER"
+	| "STOCK_RECONFIRM_YES"
+	| "STOCK_RECONFIRM_NO"
+	| "STOCK_RECONFIRM_DEFER"
+	| "STOCK_ADJUST"
+	| "OVERSELL_DETECTED"
+	| "RECIPE_VIEW"
+	| "RECIPE_FEEDBACK"
+	| "PRODUCT_REGISTER"
+	| "PRODUCT_SOLD_OUT"
+	| "STORE_REGISTER";
+
+/** GET /admin/events 의 한 줄. 차원 id 는 그 이벤트에 해당하는 것만 채워지고 나머지는 null. */
+export interface DomainEvent {
+	id: number;
+	eventType: DomainEventType;
+	userId: number | null;
+	storeId: number | null;
+	productId: number | null;
+	holdId: number | null;
+	recipeId: number | null;
+	/** 기록 시점의 이름(nickname · storeName · productName)과 이벤트별 값. 키는 이벤트마다 다르다. */
+	payload: Record<string, unknown>;
+	createdAt: string;
+}
+
 export interface KakaoLoginResult {
 	registered: boolean;
 	accessToken: string | null;

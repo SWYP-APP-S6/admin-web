@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { ConsumerAppPage } from "./pages/ConsumerAppPage";
+import { EventListPage } from "./pages/EventListPage";
 import { FlowCheckPage } from "./pages/FlowCheckPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OwnerAppPage } from "./pages/OwnerAppPage";
@@ -47,6 +48,7 @@ export default function App() {
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
+						<Route path="/events" element={<EventListPage />} />
 						<Route path="/app" element={<ConsumerAppPage />} />
 						<Route path="/flow" element={<FlowCheckPage />} />
 						<Route path="/owner" element={<OwnerAppPage />} />

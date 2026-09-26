@@ -4,6 +4,24 @@ const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
 	day: "2-digit",
 });
 
+const dateTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hour12: false,
+});
+
+export function formatDateTime(value: string | number | null): string {
+	if (value === null) {
+		return "-";
+	}
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? "-" : dateTimeFormatter.format(date);
+}
+
 // Instant 는 ISO 문자열로 내려오지만, 직렬화 설정이 바뀌어 epoch 숫자가 와도 깨지지 않게 둘 다 받는다.
 export function formatDate(value: string | number | null): string {
 	if (value === null) {
