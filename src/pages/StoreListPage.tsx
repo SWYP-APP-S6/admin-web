@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { fetchStore, fetchStores, updateStoreStatus } from "../api/stores";
 import { Modal } from "../components/Modal";
 import { useAsync } from "../hooks/useAsync";
@@ -157,14 +157,19 @@ export function StoreListPage() {
 											</td>
 											<td className="table__muted">{formatDate(store.createdAt)}</td>
 											<td>
-												<button
-													type="button"
-													className="button button--small"
-													disabled={applicationLoading}
-													onClick={() => openApplication(store.id)}
-												>
-													보기
-												</button>
+												<div className="row-actions">
+													<button
+														type="button"
+														className="button button--small"
+														disabled={applicationLoading}
+														onClick={() => openApplication(store.id)}
+													>
+														보기
+													</button>
+													<Link className="button button--small" to={`/products?storeId=${store.id}`}>
+														상품
+													</Link>
+												</div>
 											</td>
 											<td>
 												{store.status === "PENDING" ? (

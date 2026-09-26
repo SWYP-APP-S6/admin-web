@@ -107,6 +107,61 @@ export type DomainEventType =
 	| "PRODUCT_SOLD_OUT"
 	| "STORE_REGISTER";
 
+export type AdminProductFilter = "ALL" | "ON_SALE" | "SOLD_OUT" | "CLOSED" | "HIDDEN";
+
+/** 소비자 조회 조건을 뒤집은 것. 하나라도 있으면 소비자 화면에 안 뜬다. */
+export type VisibilityIssue =
+	| "STORE_NOT_APPROVED"
+	| "STORE_CLOSED_TODAY"
+	| "STORE_LOCATION_OUT_OF_RANGE"
+	| "PRODUCT_CLOSED"
+	| "PICKUP_ENDED"
+	| "NO_STOCK";
+
+/** GET /admin/products 의 한 줄. status 는 배치 전이라도 픽업 마감이 지났으면 CLOSED 다. */
+export interface AdminProduct {
+	id: number;
+	name: string;
+	category: ProductCategory;
+	photoUrl: string;
+	store: { id: number; name: string; status: StoreStatus };
+	initialQty: number;
+	stockQty: number;
+	heldQty: number;
+	availableQty: number;
+	originalPrice: number;
+	salePrice: number;
+	discountRate: number;
+	pickupStartAt: string;
+	pickupEndAt: string;
+	status: ProductStatus;
+	reconfirmPending: boolean;
+	stockConfirmedAt: string | null;
+	visibleToConsumers: boolean;
+	hiddenReasons: VisibilityIssue[];
+	createdAt: string;
+}
+
+/** GET /admin/holds 의 한 줄. status 는 만료 시각이 지난 HOLDING 을 배치 전이라도 EXPIRED 로 준다. */
+export interface AdminHold {
+	id: number;
+	groupId: number;
+	status: HoldStatus;
+	user: { id: number; name: string };
+	store: { id: number; name: string };
+	product: { id: number; name: string };
+	qty: number;
+	salePrice: number;
+	lineTotal: number;
+	heldAt: string;
+	expiresAt: string;
+	completedAt: string | null;
+	canceledAt: string | null;
+	canceledBy: "USER" | "OWNER" | null;
+	cancelReason: string | null;
+	noShowChargedAt: string | null;
+}
+
 /** GET /admin/events 의 한 줄. 차원 id 는 그 이벤트에 해당하는 것만 채워지고 나머지는 null. */
 export interface DomainEvent {
 	id: number;

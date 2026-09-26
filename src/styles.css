@@ -2139,3 +2139,27 @@ button.app-item:hover {
 .event-details__item {
 	white-space: nowrap;
 }
+
+/* 상품·찜 */
+.product-cell {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.product-cell__thumb {
+	width: 40px;
+	height: 40px;
+	border-radius: 6px;
+	object-fit: cover;
+	background: var(--border);
+	flex-shrink: 0;
+}
+.issue-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+a.button {
+	display: inline-block;
+	text-decoration: none;
+}

@@ -4,11 +4,13 @@ import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { ConsumerAppPage } from "./pages/ConsumerAppPage";
 import { EventListPage } from "./pages/EventListPage";
+import { HoldListPage } from "./pages/HoldListPage";
 import { FlowCheckPage } from "./pages/FlowCheckPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OwnerAppPage } from "./pages/OwnerAppPage";
 import { OwnerFlowCheckPage } from "./pages/OwnerFlowCheckPage";
 import { PasswordPage } from "./pages/PasswordPage";
+import { ProductListPage } from "./pages/ProductListPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeListPage } from "./pages/RecipeListPage";
 import { StoreListPage } from "./pages/StoreListPage";
@@ -48,6 +50,8 @@ export default function App() {
 						<Route path="/recipes/:id" element={<RecipeDetailPage />} />
 						<Route path="/users" element={<UserListPage />} />
 						<Route path="/stores" element={<StoreListPage />} />
+						<Route path="/products" element={<ProductListPage />} />
+						<Route path="/holds" element={<HoldListPage />} />
 						<Route path="/events" element={<EventListPage />} />
 						<Route path="/app" element={<ConsumerAppPage />} />
 						<Route path="/flow" element={<FlowCheckPage />} />
