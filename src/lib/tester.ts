@@ -15,7 +15,7 @@ export function testerTag(user: TesterSubject): { label: string; className: stri
 	}
 	if (user.testerAllowed) {
 		return {
-			label: user.testMode ? "테스트 허가 · 모드 켜짐" : "테스트 허가",
+			label: user.testMode ? "테스트 허가" : "테스트 허가 · 모드 꺼짐",
 			className: "tag tag--tester-allowed",
 		};
 	}
@@ -32,8 +32,8 @@ export function testerState(user: TesterSubject): string {
 		return "허가 안 됨";
 	}
 	return user.testMode
-		? "허가됨 · 테스트 모드 켜짐 (로그인하면 테스트 계정으로 들어감)"
-		: "허가됨 · 테스트 모드 꺼짐";
+		? "허가됨 · 카카오로 로그인하면 테스트 계정으로 들어감"
+		: "허가됨 · 본인이 앱에서 테스트 모드를 꺼서 지금은 실제 계정으로 들어감";
 }
 
 export function canChangePermission(user: TesterSubject): boolean {
@@ -44,14 +44,12 @@ export function confirmPermissionChange(user: TesterSubject): boolean {
 	const lines = user.testerAllowed
 		? [
 				`「${user.nickname}」 계정의 테스트 허가를 거둘까요?`,
-				user.testMode
-					? "테스트 모드가 꺼지고, 테스트 계정으로 로그인 중이면 최대 30분 안에 로그아웃됩니다."
-					: "앱 마이페이지의 테스트 모드 스위치가 사라집니다.",
+				"다음 카카오 로그인부터 실제 계정으로 들어갑니다. 테스트 계정으로 로그인 중이면 최대 30분 안에 로그아웃됩니다(바로 바꾸려면 앱에서 로그아웃 후 다시 로그인).",
 				"테스트 계정과 그 가게·데이터는 테스트 쪽에 그대로 남고 실사용자에게 보이지 않습니다.",
 			]
 		: [
 				`「${user.nickname}」 계정에 테스트를 허가할까요?`,
-				"앱 마이페이지에 테스트 모드 스위치가 생깁니다. 켜면 별도의 테스트 계정으로 바뀌어 테스트 가게와 테스트 데이터만 보이고, 끄면 실제 계정으로 돌아옵니다.",
+				"다음 카카오 로그인부터 별도의 테스트 계정으로 들어가, 테스트 가게와 테스트 데이터만 보고 만듭니다. 지금 실제 계정으로 로그인 중이면 최대 30분 안에 로그아웃됩니다(바로 바꾸려면 앱에서 로그아웃 후 다시 로그인).",
 				"같은 사람의 소비자·판매자 계정은 따로 허가해야 합니다.",
 			];
 	return window.confirm(lines.join("\n"));
