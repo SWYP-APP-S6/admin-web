@@ -4,7 +4,7 @@ import { updateStoreStatus } from "../api/stores";
 import { changeTesterPermission, deleteUser, fetchUsers } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
 import { formatDate, formatPhone } from "../lib/format";
-import { confirmPermissionChange, testerTag } from "../lib/tester";
+import { canChangePermission, confirmPermissionChange, testerTag } from "../lib/tester";
 import type { StoreStatus, UserRole, UserSummary } from "../types";
 
 const PAGE_SIZE = 20;
@@ -207,14 +207,16 @@ export function UserListPage() {
 											</td>
 											<td>
 												<div className="row-actions">
-													<button
-														type="button"
-														className="button button--small"
-														disabled={busyUserId === user.id}
-														onClick={() => changePermission(user)}
-													>
-														{user.testerAllowed ? "허가 해제" : "테스트 허가"}
-													</button>
+													{canChangePermission(user) && (
+														<button
+															type="button"
+															className="button button--small"
+															disabled={busyUserId === user.id}
+															onClick={() => changePermission(user)}
+														>
+															{user.testerAllowed ? "허가 해제" : "테스트 허가"}
+														</button>
+													)}
 													<button
 														type="button"
 														className="button button--small button--danger"
