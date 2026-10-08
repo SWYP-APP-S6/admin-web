@@ -33,6 +33,13 @@ export function adjustCancelCredits(id: number, delta: number): Promise<CancelCr
 	});
 }
 
+export function changeTesterPermission(id: number, allowed: boolean): Promise<void> {
+	return request<void>(`/admin/users/${id}/tester-permission`, {
+		method: "PATCH",
+		body: { allowed },
+	});
+}
+
 export function deleteUser(id: number): Promise<void> {
 	return request<void>(`/admin/users/${id}`, { method: "DELETE" });
 }

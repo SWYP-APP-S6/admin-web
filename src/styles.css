@@ -551,6 +551,17 @@ img {
 	color: #a02620;
 }
 
+.tag--tester {
+	background: #f1eafb;
+	color: #5b3a99;
+}
+
+.tag--tester-allowed {
+	background: transparent;
+	color: #5b3a99;
+	box-shadow: inset 0 0 0 1px #d9c9f2;
+}
+
 .row-actions {
 	display: flex;
 	gap: 6px;
