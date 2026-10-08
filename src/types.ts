@@ -135,9 +135,9 @@ export interface AdminUserDetail {
 	oauthProvider: string | null;
 	oauthProviderId: string | null;
 	marketingOptIn: boolean;
-	/** 관리자가 테스트를 허가했다(실제 계정만). 허가받으면 앱 마이페이지에서 본인이 테스트 모드를 켜고 끈다. */
+	/** 관리자가 테스트를 허가했다(실제 계정만). 허가하면 테스트 모드도 함께 켜진다. */
 	testerAllowed: boolean;
-	/** 실제 계정이 테스트 모드를 켰다 — 카카오로 로그인하면 테스트 계정으로 들어간다. */
+	/** 테스트 모드 — 카카오로 로그인하면 테스트 계정으로 들어간다. */
 	testMode: boolean;
 	/** 이 행이 테스트 계정이다(같은 카카오 계정의 별도 행, 만들 때 정해지고 바뀌지 않음). */
 	tester: boolean;
