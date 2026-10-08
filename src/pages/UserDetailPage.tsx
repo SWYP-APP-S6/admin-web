@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { adjustCancelCredits, changeTesterPermission, deleteUser, fetchUser } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
 import { formatDateTime, formatPhone } from "../lib/format";
-import { confirmPermissionChange, testerState, testerTag } from "../lib/tester";
+import { canChangePermission, confirmPermissionChange, testerState, testerTag } from "../lib/tester";
 import type { AdminUserDetail, CancelCreditReason, PushState, StoreStatus, TermsType } from "../types";
 
 const ROLE_LABEL = { CONSUMER: "소비자", OWNER: "판매자" } as const;
@@ -171,9 +171,11 @@ function UserDetail({
 					<Link className="button button--small" to={`/events?userId=${detail.id}`}>
 						행동 로그
 					</Link>
-					<button type="button" className="button button--small" disabled={busy} onClick={onChangePermission}>
-						{detail.testerAllowed ? "테스트 허가 해제" : "테스트 허가"}
-					</button>
+					{canChangePermission(detail) && (
+						<button type="button" className="button button--small" disabled={busy} onClick={onChangePermission}>
+							{detail.testerAllowed ? "테스트 허가 해제" : "테스트 허가"}
+						</button>
+					)}
 					<button type="button" className="button button--small button--danger" disabled={busy} onClick={onDelete}>
 						회원 삭제
 					</button>
