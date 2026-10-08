@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { updateStoreStatus } from "../api/stores";
-import { deleteUser, fetchUsers } from "../api/users";
+import { changeTesterPermission, deleteUser, fetchUsers } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
 import { formatDate, formatPhone } from "../lib/format";
+import { confirmPermissionChange, testerTag } from "../lib/tester";
 import type { StoreStatus, UserRole, UserSummary } from "../types";
 
 const PAGE_SIZE = 20;
@@ -77,6 +78,17 @@ export function UserListPage() {
 			return;
 		}
 		void run(user.id, () => deleteUser(user.id), "회원을 삭제하지 못했습니다.");
+	}
+
+	function changePermission(user: UserSummary) {
+		if (!confirmPermissionChange(user)) {
+			return;
+		}
+		void run(
+			user.id,
+			() => changeTesterPermission(user.id, !user.testerAllowed),
+			"테스트 허가를 바꾸지 못했습니다.",
+		);
 	}
 
 	function selectRole(next: "" | UserRole) {
@@ -153,6 +165,7 @@ export function UserListPage() {
 												>
 													{ROLE_LABEL[user.role]}
 												</span>
+												<TesterTag user={user} />
 											</td>
 											<td className="table__muted">{formatPhone(user.phone)}</td>
 											<td className="table__muted">{user.regionName ?? "-"}</td>
@@ -193,14 +206,24 @@ export function UserListPage() {
 												)}
 											</td>
 											<td>
-												<button
-													type="button"
-													className="button button--small button--danger"
-													disabled={busyUserId === user.id}
-													onClick={() => removeUser(user)}
-												>
-													삭제
-												</button>
+												<div className="row-actions">
+													<button
+														type="button"
+														className="button button--small"
+														disabled={busyUserId === user.id}
+														onClick={() => changePermission(user)}
+													>
+														{user.testerAllowed ? "허가 해제" : "테스트 허가"}
+													</button>
+													<button
+														type="button"
+														className="button button--small button--danger"
+														disabled={busyUserId === user.id}
+														onClick={() => removeUser(user)}
+													>
+														삭제
+													</button>
+												</div>
 											</td>
 										</tr>
 									))}
@@ -233,5 +256,18 @@ export function UserListPage() {
 				</>
 			)}
 		</section>
+	);
+}
+
+function TesterTag({ user }: { user: UserSummary }) {
+	const tag = testerTag(user);
+	if (!tag) {
+		return null;
+	}
+	return (
+		<>
+			{" "}
+			<span className={tag.className}>{tag.label}</span>
+		</>
 	);
 }

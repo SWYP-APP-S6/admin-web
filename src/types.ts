@@ -135,6 +135,10 @@ export interface AdminUserDetail {
 	oauthProvider: string | null;
 	oauthProviderId: string | null;
 	marketingOptIn: boolean;
+	/** 관리자가 테스트를 허가했다. 허가받으면 앱 마이페이지에서 본인이 테스트 모드를 켜고 끈다. */
+	testerAllowed: boolean;
+	/** 테스트 모드. 소비자는 테스트 가게만 보고, 판매자의 가게는 테스트 모드 소비자에게만 보인다. */
+	tester: boolean;
 	termsAgreedAt: string;
 	createdAt: string;
 	location: {
@@ -317,6 +321,8 @@ export interface UserSummary {
 	/** 사용자가 설정한 기본 동네. 위치 권한을 거부했을 때의 탐색 기준이며, 미설정이면 null. */
 	regionName: string | null;
 	marketingOptIn: boolean;
+	testerAllowed: boolean;
+	tester: boolean;
 	termsAgreedAt: string;
 	createdAt: string;
 	/** 판매자가 등록한 가게. 소비자이거나 아직 가게를 등록하지 않았으면 null. */

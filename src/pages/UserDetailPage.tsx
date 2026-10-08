@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { adjustCancelCredits, deleteUser, fetchUser } from "../api/users";
+import { adjustCancelCredits, changeTesterPermission, deleteUser, fetchUser } from "../api/users";
 import { useAsync } from "../hooks/useAsync";
 import { formatDateTime, formatPhone } from "../lib/format";
+import { confirmPermissionChange, testerState, testerTag } from "../lib/tester";
 import type { AdminUserDetail, CancelCreditReason, PushState, StoreStatus, TermsType } from "../types";
 
 const ROLE_LABEL = { CONSUMER: "소비자", OWNER: "판매자" } as const;
@@ -83,6 +84,13 @@ export function UserDetailPage() {
 		void run(() => adjustCancelCredits(userId, delta), "취소권을 보정하지 못했습니다.");
 	}
 
+	function changePermission(detail: AdminUserDetail) {
+		if (!confirmPermissionChange(detail)) {
+			return;
+		}
+		void run(() => changeTesterPermission(userId, !detail.testerAllowed), "테스트 허가를 바꾸지 못했습니다.");
+	}
+
 	async function remove(detail: AdminUserDetail) {
 		const storeNotice = detail.store
 			? `\n가게 「${detail.store.name}」와 상품, 그 가게의 찜 기록도 함께 삭제됩니다.`
@@ -112,7 +120,13 @@ export function UserDetailPage() {
 			{error && <p className="state state--error">{error}</p>}
 
 			{user.data && (
-				<UserDetail detail={user.data} busy={busy} onAdjust={adjust} onDelete={() => void remove(user.data!)} />
+				<UserDetail
+					detail={user.data}
+					busy={busy}
+					onAdjust={adjust}
+					onChangePermission={() => changePermission(user.data!)}
+					onDelete={() => void remove(user.data!)}
+				/>
 			)}
 		</section>
 	);
@@ -122,13 +136,16 @@ function UserDetail({
 	detail,
 	busy,
 	onAdjust,
+	onChangePermission,
 	onDelete,
 }: {
 	detail: AdminUserDetail;
 	busy: boolean;
 	onAdjust: (delta: number) => void;
+	onChangePermission: () => void;
 	onDelete: () => void;
 }) {
+	const tag = testerTag(detail);
 	const holdTotal =
 		detail.holds.holding +
 		detail.holds.completed +
@@ -146,6 +163,7 @@ function UserDetail({
 				<span className={detail.role === "OWNER" ? "tag tag--owner" : "tag tag--consumer"}>
 					{ROLE_LABEL[detail.role]}
 				</span>
+				{tag && <span className={tag.className}>{tag.label}</span>}
 				<div className="row-actions page-head__actions">
 					<Link className="button button--small" to={`/holds?userId=${detail.id}`}>
 						찜 목록
@@ -153,6 +171,9 @@ function UserDetail({
 					<Link className="button button--small" to={`/events?userId=${detail.id}`}>
 						행동 로그
 					</Link>
+					<button type="button" className="button button--small" disabled={busy} onClick={onChangePermission}>
+						{detail.testerAllowed ? "테스트 허가 해제" : "테스트 허가"}
+					</button>
 					<button type="button" className="button button--small button--danger" disabled={busy} onClick={onDelete}>
 						회원 삭제
 					</button>
@@ -178,6 +199,8 @@ function UserDetail({
 						</dd>
 						<dt>마케팅 수신</dt>
 						<dd>{detail.marketingOptIn ? "동의" : "미동의"}</dd>
+						<dt>테스트</dt>
+						<dd>{testerState(detail)}</dd>
 						<dt>약관 동의 시각</dt>
 						<dd>{formatDateTime(detail.termsAgreedAt)}</dd>
 						<dt>가입일</dt>
